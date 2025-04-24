@@ -1,90 +1,59 @@
 # Architecture Overview
 
-## 1. Clean Architecture
-The project follows Clean Architecture principles with three main layers:
-- **Presentation Layer**: MVVM pattern with ViewModels, Fragments, and Activities
-- **Domain Layer**: Business logic and use cases
-- **Data Layer**: Repositories and data sources
+## 1. Current Architecture (Simplified)
+
+The project currently uses a basic Activity-based structure without distinct layers like MVVM or Clean Architecture as initially planned in the template. Logic is primarily contained within Activities and specific helper classes.
+
+- **Presentation Layer**: Standard Android Activities (`MainActivity`, `RegActivityFile`, `RegActivityFB`, `level1`) and XML layouts.
+- **Data Layer**: Currently split between:
+    - `UserFileStorage.java`: Active implementation for saving/loading users to a local JSON file (`users.json`).
+    - `MyFBDB.java`: Inactive implementation for interacting with Firebase Realtime Database (primarily user CRUD).
+- **Domain Layer**: No separate domain layer currently exists. Business logic (like user validation) is within Activities or the data helper classes.
 
 ## 2. Key Components
 
-### Authentication Module
-- Firebase Authentication for user management
-- Secure password handling
-- Session management
-- Custom AuthRepository for Firebase operations
+### Authentication/User Management
+- **Active:** `UserFileStorage.java` handles creating, loading, and checking user credentials against a local JSON file.
+- **Inactive:** `MyFBDB.java` provides methods to interact with the Firebase Realtime Database `/Users` node. `RegActivityFB.java` uses `MyFBDB`.
+- **User Model:** `User.java` defines the user data structure.
+- **UI:**
+    - `MainActivity`: Login fields, navigates to registration or game.
+    - `RegActivityFile`: Handles registration UI and logic for file storage.
+    - `RegActivityFB`: Handles registration UI and logic for Firebase storage.
 
-### Database Module
-- Firebase Realtime Database for data persistence
-- Two main collections: Users and Scores
-- Real-time updates for leaderboard
-- Offline support
+### Database (Storage)
+- **Local File:** `users.json` stored in the app's internal storage, managed by `UserFileStorage`.
+- **Firebase Realtime Database:** Configured in `google-services.json` and accessed via `MyFBDB.java`. The planned structure is a `/Users` node containing user objects keyed by Firebase's generated push ID.
 
-### Game Module
-- Core game logic
-- Level management
-- Score calculation
-- Progress tracking
+### Game Module (Basic Structure)
+- `level1.java`: Activity intended to host the game.
+- `GameManager.java`: A `SurfaceView` likely intended to handle game rendering and core logic (implementation pending).
 
 ### UI Components
-- Material Design components
-- Custom views for game elements
-- Responsive layouts
-- Dark mode support
+- Standard Android SDK components (Buttons, EditText, TextView, LinearLayout, ConstraintLayout) defined in XML.
+- `Dialog` used for the Help screen in `MainActivity`.
 
 ## 3. Testing Strategy
 
-### Unit Tests
-- ViewModel testing with JUnit and Mockito
-- Repository testing with mock data sources
-- Use case testing for business logic
-
-### Integration Tests
-- Firebase authentication flow testing
-- Database operations testing
-- Component interaction testing
-
-### UI Tests
-- Espresso for UI automation
-- User flow testing
-- Screen state verification
+- Currently, no automated testing frameworks (JUnit, Espresso) are implemented or configured.
+- Testing relies on manual execution and verification.
 
 ## 4. Security Considerations
 
-- Secure user authentication
-- Data validation
-- Firebase security rules
-- Encrypted local storage
-- Input sanitization
+- **Passwords:** Currently stored and checked as plain text in both the local `users.json` file and potentially in Firebase via `MyFBDB`. **This is insecure and needs to be addressed (e.g., using hashing).**
+- **Firebase Rules:** If using Firebase, the Realtime Database rules need to be configured for production to restrict access appropriately (currently likely requires test mode for `MyFBDB` to function).
+- **Input Validation:** Basic checks for empty username/password exist.
 
 ## 5. Dependencies
 
-```kotlin
-// Core
-implementation("androidx.core:core-ktx:1.12.0")
-implementation("androidx.appcompat:appcompat:1.6.1")
-implementation("com.google.android.material:material:1.11.0")
+(Refer to `app/build.gradle.kts` and `gradle/libs.versions.toml` for specific dependencies and versions.)
 
-// Architecture Components
-implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
-implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
-implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
-
-// Firebase
-implementation(platform("com.google.firebase:firebase-bom:32.7.2"))
-implementation("com.google.firebase:firebase-auth-ktx")
-implementation("com.google.firebase:firebase-database-ktx")
-
-// Dependency Injection
-implementation("com.google.dagger:hilt-android:2.50")
-kapt("com.google.dagger:hilt-compiler:2.50")
-
-// Testing
-testImplementation("junit:junit:4.13.2")
-testImplementation("org.mockito:mockito-core:5.10.0")
-androidTestImplementation("androidx.test.ext:junit:1.1.5")
-androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-```
+Key dependencies include:
+- AndroidX libraries (appcompat, activity, constraintlayout)
+- Google Material Components
+- Firebase Realtime Database (`firebase-database`)
+- Google Play Services plugin (`google-gms-google-services`)
+- Kotlin standard library (via `org.jetbrains.kotlin.android` plugin)
 
 ## 6. Project Timeline
 

@@ -50,14 +50,15 @@ public class RegActivityFile extends AppCompatActivity {
                 userFileStorage.saveUser(newUser);
 
                 Toast.makeText(RegActivityFile.this, "Registration successful!", Toast.LENGTH_SHORT).show();
-                finish();
+                // Intent intent = new Intent(RegActivityFile.this, level1.class);
+                // startActivity(intent);
+                finish(); // Close the registration activity
             }
         });
     }
-    public void toPlay(View v) {
-        Intent intent = new Intent(RegActivityFile.this, level1.class);
-        startActivity(intent);
-        finish();
-    }
-
+    // public void toPlay(View v) { // This method is likely unused and can be removed
+    //    Intent intent = new Intent(RegActivityFile.this, level1.class);
+    //    startActivity(intent);
+    //    finish();
+    // }
 }

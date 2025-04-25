@@ -1,104 +1,93 @@
 package com.example.snake;
 
+import android.app.Dialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.EditText;
-import android.app.Dialog;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends AppCompatActivity {
+
     private UserFileStorage userFileStorage;
-    private MyFBDB myFBDB;
+    private MyFBDB myFBDB; // Kept for potential future use, though inactive
     private Dialog helpDialog;
-
-    public void checkUser(View v){
-        // Removed reading from EditText fields
-        // EditText etUserName = findViewById(R.id.etUserName);
-        // EditText etPassword = findViewById(R.id.etPassword);
-        // String un = etUserName.getText().toString().trim();
-        // String pw = etPassword.getText().toString().trim();
-
-        // Hardcode test user credentials
-        String un = "testuser";
-        String pw = "abc123";
-        Log.d("CheckUser", "Attempting login for hardcoded user: " + un);
-
-        // Removed check for empty username/password as it's hardcoded now
-        // if (un.isEmpty() || pw.isEmpty()) { ... }
-
-        // Check hardcoded credentials using file storage
-        if(userFileStorage.checkUser(un, pw)){
-            Log.d("CheckUser", "FileStorage: Hardcoded test user credentials valid.");
-            Intent intent =  new Intent(this, level1.class);
-            startActivity(intent);
-        } else {
-            // This case should not happen if testuser was created correctly
-            Log.e("CheckUser", "FileStorage: Hardcoded test user credentials INVALID! Check UserFileStorage.");
-            Toast.makeText(this, "Test user login failed!", Toast.LENGTH_LONG).show();
-        }
-
-        /* Firebase Check (commented out - keep for reference)
-        // if(myFBDB.checkUser(un, pw)){ ... }
-        */
-    }
-
-    public void toRegister(View v){
-        Intent intent = new Intent(this, RegActivityFile.class);
-        startActivity(intent);
-    }
+    private EditText etUserName, etPassword;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main); // Use the restored login layout
+
         userFileStorage = new UserFileStorage(this);
         myFBDB = new MyFBDB();
-        myFBDB.ensureTestUserExists();
+        // myFBDB.ensureTestUserExists(); // Maybe remove if not testing FB path
 
+        etUserName = findViewById(R.id.etUserName);
+        etPassword = findViewById(R.id.etPassword);
+
+        // Setup Help Button and Dialog (Restored)
         Button helpButton = findViewById(R.id.helpButton);
-        helpButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showHelpDialog();
-            }
-        });
+        helpButton.setOnClickListener(v -> showHelpDialog());
 
         helpDialog = new Dialog(this);
         helpDialog.setContentView(R.layout.dialog_help);
-        TextView tv  = helpDialog.findViewById(R.id.helpText);
-        tv.setText("Welcome to 'Snake!' Before you can dive into the slithering action, you'll need to create an account or log in.\n\n" +
-                "Login/Registration:\n\n" +
-                "New Users: If you don't have an account yet, tap the 'Register' button. You'll be prompted to enter a username and password. Once registered, you can use these credentials to log in.\n\n" +
-                "Existing Users: If you already have an account, enter your username and password into the provided fields, and then tap the 'Play' button to begin.\n\n" +
-                "HOW TO PLAY: Snake!\n\n" +
-                "'Snake!' is a fast-paced, addictive game of reflexes and strategy. You control a growing snake within an enclosed arena. Your goal is to eat as many apples as possible to increase your snake's length and score.\n\n" +
-                "Gameplay Mechanics:\n\n" +
-                "Movement: Control the snake's direction using on-screen arrow buttons.\n" +
-                "Eating Apples: Guide the snake to consume apples that appear randomly within the arena. Each apple eaten increases the snake's length.\n" +
-                "Avoid Collisions: The snake must not collide with the walls of the arena or with its own body. A collision results in game over.\n\n" +
-                "Scoring: Your score is determined by the number of apples eaten. The longer the snake, the higher the score.\n\n" +
-                "Have fun and see how long you can make your snake grow!");
+        TextView tv = helpDialog.findViewById(R.id.helpText);
+        // Restore or update help text as needed
+        tv.setText("Welcome to Snake! Please log in or register.\n\n" +
+                   "Login: Enter username/password, press Play.\n" +
+                   "Register: Press Register, create account, then log in.\n\n" +
+                   "Game controls use on-screen buttons.");
 
         Button closeButton = helpDialog.findViewById(R.id.closeButton);
-        closeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                helpDialog.dismiss();
-            }
-        });
+        closeButton.setOnClickListener(v -> helpDialog.dismiss());
     }
 
-    private void showHelpDialog() {
+    // Method called by Play button's onClick
+    public void checkUser(View v) {
+        String un = etUserName.getText().toString().trim();
+        String pw = etPassword.getText().toString().trim();
+        Log.d("CheckUser", "Attempting login for user: " + un);
+
+        if (un.isEmpty() || pw.isEmpty()) {
+            Toast.makeText(this, "Username and password cannot be empty.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Use file storage check (primary method now)
+        if (userFileStorage.checkUser(un, pw)) {
+            Log.d("CheckUser", "FileStorage: User credentials valid.");
+            // ** Start GameActivity instead of level1 **
+            Intent intent = new Intent(this, GameActivity.class);
+            // Optional: Pass username to GameActivity if needed later
+            // intent.putExtra("USERNAME", un);
+            startActivity(intent);
+            // finish(); // Optional: finish MainActivity so back button doesn't return here?
+        } else {
+            Log.w("CheckUser", "FileStorage: Invalid credentials for user: " + un);
+            Toast.makeText(this, "Invalid username or password.", Toast.LENGTH_LONG).show();
+        }
+
+        /* Firebase Check (inactive - keep for reference)
+        if(myFBDB.checkUser(un, pw)){
+             Intent intent = new Intent(this, GameActivity.class); // Also start GameActivity if using FB
+             startActivity(intent);
+        }
+        */
+    }
+
+    // Method called by Register button's onClick
+    public void toRegister(View v) {
+        Intent intent = new Intent(this, RegActivityFile.class);
+        startActivity(intent);
+    }
+
+    // Method called by Help button's onClick
+    public void showHelpDialog() {
         if (helpDialog != null) {
             helpDialog.show();
         }

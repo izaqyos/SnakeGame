@@ -15,44 +15,48 @@ import android.view.SurfaceView;
 import java.util.LinkedList;
 import java.util.Random;
 
-public class GameManager extends SurfaceView implements Runnable {
+public class GameManager extends SurfaceView implements Runnable, SurfaceHolder.Callback {
     // Enum for directions
     public enum Direction {
         UP, DOWN, LEFT, RIGHT
     }
 
+    // Screen dimensions - obtained from surfaceChanged
     private int scrHeight;
     private int scrWidth;
-    private Context context;
+    // private Context context; // Context obtained from GameActivity
+    private GameActivity gameActivity; // Reference to GameActivity
+
     private Canvas myCanvas;
     private SurfaceHolder holder;
     private Paint bgPaint;
     private Paint snakePaint;
     private Paint foodPaint;
-    private Paint scorePaint;
+    // private Paint scorePaint; // Score drawing removed
     private Paint gameOverPaint;
     private int segmentSize = 40;
     private Thread thread = null;
     private volatile boolean running = false;
     private volatile boolean isGameOver = false;
+    private volatile boolean surfaceReady = false; // Flag for surface readiness
     private Direction currentDirection = Direction.RIGHT;
     private int score = 0;
     private LinkedList<Point> snakeSegments = new LinkedList<>();
     private Point foodPosition = new Point();
     private Random random = new Random();
-    private long nextFrameTime;
+    // private long nextFrameTime; // Not used in current loop implementation
     private final long FRAME_RATE_MS = 150;
 
-    GameManager(Context context, int width, int height) {
+    // Updated Constructor to accept GameActivity
+    GameManager(Context context, GameActivity activity) {
         super(context);
-        this.context = context;
-        scrWidth = width;
-        scrHeight = height;
+        this.gameActivity = activity;
         holder = getHolder();
-        Log.i("GameManager", "Screen Dimensions: " + scrWidth + "x" + scrHeight);
+        holder.addCallback(this); // Register for surface events
 
+        // Initialize Paints
         bgPaint = new Paint();
-        bgPaint.setColor(Color.parseColor("#C8E6C9"));
+        bgPaint.setColor(Color.parseColor("#D3D3D3")); // Use background color from layout
 
         snakePaint = new Paint();
         snakePaint.setColor(Color.parseColor("#4CAF50"));
@@ -60,38 +64,110 @@ public class GameManager extends SurfaceView implements Runnable {
         foodPaint = new Paint();
         foodPaint.setColor(Color.parseColor("#F44336"));
 
-        scorePaint = new Paint();
-        scorePaint.setColor(Color.BLACK);
-        scorePaint.setTextSize(60);
-        scorePaint.setTextAlign(Paint.Align.LEFT);
-        
+        // scorePaint removed
+
         gameOverPaint = new Paint();
         gameOverPaint.setColor(Color.RED);
         gameOverPaint.setTextSize(100);
         gameOverPaint.setTextAlign(Paint.Align.CENTER);
 
-        initGame();
+        // Do not call initGame() here, wait for surfaceChanged
+        Log.i("GameManager", "GameManager constructed, waiting for surface.");
+    }
+
+    // Renamed from start() for clarity
+    private void startGameLoop() {
+        if (thread == null || !thread.isAlive()) {
+            running = true;
+            isGameOver = false; // Ensure game isn't over when starting loop
+            thread = new Thread(this);
+            thread.start();
+            Log.i("GameManager", "Game loop thread started.");
+        }
+    }
+
+    // Renamed from stopThread() for clarity
+    private void stopGameLoop() {
+        running = false;
+        boolean retry = true;
+        while(retry) {
+            try {
+                if (thread != null) {
+                    thread.join();
+                }
+                retry = false;
+                thread = null; // Nullify thread after joining
+                Log.i("GameManager", "Game loop thread stopped.");
+            } catch (InterruptedException e) {
+                Log.e("GameManager", "Error stopping thread: " + e.getMessage());
+                Thread.currentThread().interrupt(); // Re-interrupt thread
+            }
+        }
+    }
+
+    // Called by GameActivity.onPause()
+    public void pause() {
+        running = false; // Stop the game loop logic execution
+        Log.i("GameManager", "Game paused (running set to false).");
+    }
+
+    // Called by GameActivity.onResume()
+    public void resume() {
+        if (surfaceReady) { // Only resume game logic if surface is ready
+           running = true; // Allow game loop logic to execute
+           // If thread isn't running, surfaceChanged should restart it
+           Log.i("GameManager", "Game resumed (running set to true).");
+        } else {
+           Log.i("GameManager", "Resume called but surface not ready.");
+        }
+    }
+
+    public void setDirection(Direction newDirection) {
+        if (currentDirection == Direction.UP && newDirection == Direction.DOWN) return;
+        if (currentDirection == Direction.DOWN && newDirection == Direction.UP) return;
+        if (currentDirection == Direction.LEFT && newDirection == Direction.RIGHT) return;
+        if (currentDirection == Direction.RIGHT && newDirection == Direction.LEFT) return;
+
+        currentDirection = newDirection;
+        Log.d("GameManager", "Direction set to: " + newDirection);
     }
 
     private void initGame() {
-        Log.d("GameManager", "Initializing game state...");
+        Log.d("GameManager", "Initializing game state with dimensions: " + scrWidth + "x" + scrHeight);
+        if (scrWidth == 0 || scrHeight == 0) {
+            Log.e("GameManager", "Cannot initGame: dimensions are zero.");
+            return;
+        }
         snakeSegments.clear();
         score = 0;
         currentDirection = Direction.RIGHT;
         isGameOver = false;
 
+        // Center starting position based on actual surface dimensions
         int startX = (scrWidth / segmentSize / 2) * segmentSize;
         int startY = (scrHeight / segmentSize / 2) * segmentSize;
-        
-        snakeSegments.addFirst(new Point(startX - (2 * segmentSize), startY));
-        snakeSegments.addFirst(new Point(startX - segmentSize, startY));
-        snakeSegments.addFirst(new Point(startX, startY));
 
-        placeFood();
-        Log.d("GameManager", "Game initialized. Head at: (" + snakeSegments.getFirst().x + "," + snakeSegments.getFirst().y + ")");
+        // Ensure start position is within bounds if screen is very small
+        startX = Math.max(segmentSize * 2, startX);
+        startY = Math.max(0, startY);
+
+        // Check bounds before adding segments
+        if (startX < scrWidth && startX - segmentSize < scrWidth && startX - (2 * segmentSize) < scrWidth &&
+            startY < scrHeight) {
+            snakeSegments.addFirst(new Point(startX - (2 * segmentSize), startY));
+            snakeSegments.addFirst(new Point(startX - segmentSize, startY));
+            snakeSegments.addFirst(new Point(startX, startY));
+            placeFood();
+            gameActivity.updateScore(score); // Update score display in GameActivity
+            Log.d("GameManager", "Game initialized. Head at: (" + snakeSegments.getFirst().x + "," + snakeSegments.getFirst().y + ")");
+        } else {
+             Log.e("GameManager", "Could not initialize snake within bounds.");
+             isGameOver = true; // Set game over if init fails
+        }
     }
 
     private void placeFood() {
+        if (scrWidth == 0 || scrHeight == 0) return;
         int numBlocksWide = scrWidth / segmentSize;
         int numBlocksHigh = scrHeight / segmentSize;
         boolean placed = false;
@@ -109,45 +185,6 @@ public class GameManager extends SurfaceView implements Runnable {
             }
         }
         Log.d("GameManager", "Food placed at: (" + foodPosition.x + ", " + foodPosition.y + ")");
-    }
-
-    public void start() {
-        running = true;
-        thread = new Thread(this);
-        thread.start();
-    }
-
-    public void stopThread() {
-        running = false;
-        try {
-            if (thread != null) {
-                thread.join();
-            }
-            thread = null;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void pause() {
-        running = false;
-    }
-
-    public void resume() {
-        running = true;
-        if (thread == null) {
-            start();
-        }
-    }
-
-    public void setDirection(Direction newDirection) {
-        if (currentDirection == Direction.UP && newDirection == Direction.DOWN) return;
-        if (currentDirection == Direction.DOWN && newDirection == Direction.UP) return;
-        if (currentDirection == Direction.LEFT && newDirection == Direction.RIGHT) return;
-        if (currentDirection == Direction.RIGHT && newDirection == Direction.LEFT) return;
-
-        currentDirection = newDirection;
-        Log.d("GameManager", "Direction set to: " + newDirection);
     }
 
     private void updateGame() {
@@ -200,6 +237,7 @@ public class GameManager extends SurfaceView implements Runnable {
         // Check for food consumption
         if (newHead.x == foodPosition.x && newHead.y == foodPosition.y) {
             score++;
+            gameActivity.updateScore(score); // << UPDATE SCORE IN GAMEACTIVITY
             Log.i("GameManager", "Food eaten! Score: " + score);
             placeFood(); // Place new food
             // Don't remove tail segment - snake grows
@@ -214,8 +252,8 @@ public class GameManager extends SurfaceView implements Runnable {
             myCanvas = holder.lockCanvas();
             if (myCanvas == null) return; // Check if canvas is valid
 
-            // Draw background
-            myCanvas.drawPaint(bgPaint);
+            // Draw background - Use surface dimensions
+            myCanvas.drawRect(0, 0, scrWidth, scrHeight, bgPaint);
 
             // Draw Food
             myCanvas.drawRect(foodPosition.x, foodPosition.y, 
@@ -229,11 +267,12 @@ public class GameManager extends SurfaceView implements Runnable {
                                   snakePaint);
             }
 
-            // Draw Score
-            myCanvas.drawText("Score: " + score, 20, 70, scorePaint);
+            // Draw Score - REMOVED
+            // myCanvas.drawText("Score: " + score, 20, 70, scorePaint);
 
             // Draw Game Over message if applicable
             if (isGameOver) {
+                // Use current dimensions for centering
                 myCanvas.drawText("Game Over!", scrWidth / 2, scrHeight / 2, gameOverPaint);
             }
 
@@ -246,25 +285,53 @@ public class GameManager extends SurfaceView implements Runnable {
         while (running) {
             long startTime = System.currentTimeMillis();
 
-            if (!isGameOver) {
+            if (!isGameOver && surfaceReady) { // Only update/draw if surface is ready
                 updateGame();
+                drawSurface();
             }
-            drawSurface();
 
-            // Control frame rate
+            // Frame rate control
             long timeThisFrame = System.currentTimeMillis() - startTime;
-            long timeToSleep = FRAME_RATE_MS - timeThisFrame;
-
-            if (timeToSleep > 0) {
+            long sleepTime = FRAME_RATE_MS - timeThisFrame;
+            if (sleepTime > 0) {
                 try {
-                    Thread.sleep(timeToSleep);
+                    Thread.sleep(sleepTime);
                 } catch (InterruptedException e) {
-                     Log.e("GameManager", "Thread interrupted", e);
-                     Thread.currentThread().interrupt(); // Preserve interrupt status
-                     running = false; // Stop loop on interrupt
+                    Log.e("GameManager", "Thread interrupted: " + e.getMessage());
+                    Thread.currentThread().interrupt(); // Re-interrupt thread
                 }
             }
         }
-        Log.i("GameManager", "Game loop finished.");
+         Log.i("GameManager", "Exiting run loop (running is false).");
+    }
+
+    // SurfaceHolder.Callback methods
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+        Log.i("GameManager", "Surface created.");
+        surfaceReady = true;
+        // Dimensions might not be known yet, wait for surfaceChanged
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        Log.i("GameManager", "Surface changed: " + width + "x" + height);
+        if (width > 0 && height > 0) {
+            scrWidth = width;
+            scrHeight = height;
+            surfaceReady = true;
+            initGame(); // Initialize game state with correct dimensions
+            startGameLoop(); // Start or ensure the game loop is running
+        } else {
+            Log.w("GameManager", "Surface changed with invalid dimensions.");
+            surfaceReady = false;
+        }
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        Log.i("GameManager", "Surface destroyed.");
+        surfaceReady = false;
+        stopGameLoop(); // Stop the game thread cleanly
     }
 }

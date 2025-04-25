@@ -1,42 +1,51 @@
 # Architecture Overview
 
-## 1. Current Architecture (Simplified)
+## 1. Current Architecture
 
-The project currently uses a basic Activity-based structure without distinct layers like MVVM or Clean Architecture as initially planned in the template. Logic is primarily contained within Activities and specific helper classes.
+The project uses a simple structure centered around `MainActivity` hosting a custom `SurfaceView` (`GameManager`) for the game logic and rendering.
 
-- **Presentation Layer**: Standard Android Activities (`MainActivity`, `RegActivityFile`, `RegActivityFB`, `level1`) and XML layouts.
-- **Data Layer**: Currently split between:
-    - `UserFileStorage.java`: Active implementation for saving/loading users to a local JSON file (`users.json`).
-    - `MyFBDB.java`: Inactive implementation for interacting with Firebase Realtime Database (primarily user CRUD).
-- **Domain Layer**: No separate domain layer currently exists. Business logic (like user validation) is within Activities or the data helper classes.
+- **Presentation Layer**: `MainActivity.java` manages the overall screen layout (`activity_main.xml`), displays the score (`TextView`), handles user input via buttons, and controls the lifecycle of the `GameManager`. `activity_main.xml` defines the layout using `ConstraintLayout`, including the score `TextView`, a `FrameLayout` container for the `SurfaceView`, and a `LinearLayout` for control buttons.
+- **Game Logic/Rendering Layer**: `GameManager.java` extends `SurfaceView` and implements `Runnable` and `SurfaceHolder.Callback`. It contains the main game loop (`run`), handles snake movement, collision detection, food placement, scoring logic (`updateGame`), and draws the game state (snake, food, background, game over message) onto the `Canvas` (`drawSurface`). It receives directional input from `MainActivity` and updates the score via a callback to `MainActivity`.
+- **Data Layer (Legacy/Inactive)**: Code for user authentication and storage using local files (`UserFileStorage.java`) and Firebase Realtime Database (`MyFBDB.java`, `User.java`) exists but is not currently integrated into the main game flow.
+- **Domain Layer**: No separate domain layer exists. Game logic is within `GameManager`, UI logic within `MainActivity`.
 
 ## 2. Key Components
 
-### Authentication/User Management
-- **Active:** `UserFileStorage.java` handles creating, loading, and checking user credentials against a local JSON file.
-- **Inactive:** `MyFBDB.java` provides methods to interact with the Firebase Realtime Database `/Users` node. `RegActivityFB.java` uses `MyFBDB`.
-- **User Model:** `User.java` defines the user data structure.
-- **UI:**
-    - `MainActivity`: Login fields, navigates to registration or game.
-    - `RegActivityFile`: Handles registration UI and logic for file storage.
-    - `RegActivityFB`: Handles registration UI and logic for Firebase storage.
+### Game Module
+*   **`MainActivity.java`:** The main entry point and host activity.
+    *   Sets up the layout (`activity_main.xml`).
+    *   Initializes and adds the `GameManager` instance to the `FrameLayout`.
+    *   Manages `GameManager`'s lifecycle (`onResume`, `onPause`).
+    *   Handles button clicks to set the snake's direction via `gameManager.setDirection()`.
+    *   Displays the current score in a `TextView`, updated via `updateScore()` method called by `GameManager`.
+*   **`GameManager.java` (extends `SurfaceView`, implements `Runnable`, `SurfaceHolder.Callback`):**
+    *   Manages the `SurfaceHolder` lifecycle (`surfaceCreated`, `surfaceChanged`, `surfaceDestroyed`) to get canvas dimensions and control the game thread.
+    *   Runs the main game loop in a separate `Thread` (`run`).
+    *   Contains game state: `snakeSegments` (`LinkedList<Point>`), `foodPosition` (`Point`), `score` (int), `currentDirection` (`Direction`), `isGameOver` (boolean).
+    *   Implements core game logic in `updateGame()`: calculates new head position, checks border/self-collision, handles food eating (increment score, call `mainActivity.updateScore()`, place new food, grow snake), moves snake by adding head/removing tail.
+    *   Draws game elements (background, food, snake, game over text) onto the `Canvas` in `drawSurface()`, using dimensions obtained from `surfaceChanged`.
+    *   Uses a fixed delay (`FRAME_RATE_MS`) in `run()` to control game speed.
+*   **`Direction.java`:** An enum defining the possible movement directions (UP, DOWN, LEFT, RIGHT).
+*   **`activity_main.xml`:** The layout file for the game screen.
+    *   Uses `ConstraintLayout`.
+    *   Contains `TextView` (`scoreTextView`) at the top.
+    *   Contains `FrameLayout` (`gameSurfaceContainer`) in the center to hold the `GameManager`.
+    *   Contains `LinearLayout` (`controlsLayout`) at the bottom with four `Button`s for directions.
 
-### Database (Storage)
-- **Local File:** `users.json` stored in the app's internal storage, managed by `UserFileStorage`.
-- **Firebase Realtime Database:** Configured in `google-services.json` and accessed via `MyFBDB.java`. The planned structure is a `/Users` node containing user objects keyed by Firebase's generated push ID.
-
-### Game Module (Basic Structure)
-- `level1.java`: Activity intended to host the game.
-- `GameManager.java`: A `SurfaceView` likely intended to handle game rendering and core logic (implementation pending).
+### Authentication/User Management (Legacy/Inactive)
+- **Code:** `UserFileStorage.java`, `MyFBDB.java`, `User.java`, `RegActivityFile.java`, `RegActivityFB.java`.
+- **Functionality:** Provides user registration/login via local file or Firebase RTDB.
+- **Status:** Not connected to the current `MainActivity` game flow.
 
 ### UI Components
-- Standard Android SDK components (Buttons, EditText, TextView, LinearLayout, ConstraintLayout) defined in XML.
-- `Dialog` used for the Help screen in `MainActivity`.
+- Standard Android SDK components (`TextView`, `FrameLayout`, `LinearLayout`, `Button`) defined in `activity_main.xml`.
+- `SurfaceView` (`GameManager`) used for custom drawing.
 
 ## 3. Testing Strategy
 
-- Currently, no automated testing frameworks (JUnit, Espresso) are implemented or configured.
-- Testing relies on manual execution and verification.
+- Currently relies on manual execution and verification of the game.
+- No automated tests (Unit, UI) implemented for the core game components (`MainActivity`, `GameManager`).
+- Instrumented tests exist for legacy authentication components (`UserFileStorage`, `MyFBDB`).
 
 ## 4. Security Considerations
 

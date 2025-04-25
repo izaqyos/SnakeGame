@@ -25,7 +25,7 @@
             android:name=".level2"
             android:exported="false" />
         <activity
-            android:name=".level1"
+            android:name=".GameActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"

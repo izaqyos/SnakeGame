@@ -25,33 +25,39 @@ public class UserFileStorage {
     private List<User> usersList;
 
     public UserFileStorage(Context context) {
+        Log.i(TAG, "UserFileStorage instance created.");
         this.context = context;
+        Log.d(TAG, "Loading users from file...");
         this.usersList = loadUsersFromFile();
+        Log.d(TAG, "Initializing test user check...");
         initializeTestUser();
+        Log.i(TAG, "UserFileStorage initialization complete. Users loaded: " + usersList.size());
     }
 
     private void initializeTestUser() {
-        if (!userExists("testuser")) {
-            Log.d(TAG, "Initializing test user...");
+        boolean exists = userExists("testuser"); // Check first
+        if (!exists) {
+            Log.i(TAG, "InitializeTestUser: Test user NOT found, attempting to create.");
             User testUser = new User("testuser", "abc123", 0, 0, 0);
-            // Use a simple key for the test user, actual key isn't critical for file storage
-            testUser.setKey("testkey");
+            testUser.setKey("testkey"); // Assign a key
             saveUser(testUser); // This will also save the updated list to the file
         } else {
-             Log.d(TAG, "Test user already exists.");
+             Log.i(TAG, "InitializeTestUser: Test user already exists.");
         }
     }
 
     private List<User> loadUsersFromFile() {
+        Log.d(TAG, "loadUsersFromFile: Attempting to load from " + FILENAME);
         List<User> users = new ArrayList<>();
-        FileInputStream fis = null;
-        try {
-            File file = new File(context.getFilesDir(), FILENAME);
-            if (!file.exists()) {
-                 Log.d(TAG, "Users file does not exist, creating empty list.");
-                 return users; // Return empty list if file doesn't exist
-            }
+        File file = new File(context.getFilesDir(), FILENAME);
+        if (!file.exists()) {
+             Log.w(TAG, "loadUsersFromFile: File does not exist. Returning empty list.");
+             return users;
+        }
 
+        FileInputStream fis = null;
+        String jsonString = null;
+        try {
             fis = context.openFileInput(FILENAME);
             InputStreamReader inputStreamReader = new InputStreamReader(fis, StandardCharsets.UTF_8);
             StringBuilder stringBuilder = new StringBuilder();
@@ -62,136 +68,141 @@ public class UserFileStorage {
                     line = reader.readLine();
                 }
             }
+            jsonString = stringBuilder.toString();
+            Log.d(TAG, "loadUsersFromFile: Read raw JSON string: " + jsonString);
 
-            String jsonString = stringBuilder.toString();
-             Log.d(TAG, "Read from file: " + jsonString);
-             if (jsonString.isEmpty()) {
-                 return users; // Return empty list if file is empty
-             }
+            if (jsonString.trim().isEmpty()) {
+                Log.w(TAG, "loadUsersFromFile: File is empty. Returning empty list.");
+                return users;
+            }
 
             JSONArray jsonArray = new JSONArray(jsonString);
+            Log.d(TAG, "loadUsersFromFile: Parsed JSON array with length: " + jsonArray.length());
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject userJson = jsonArray.getJSONObject(i);
                 User user = new User();
-                // Key might not be present in older saves or needed for file storage logic
-                if (userJson.has("key")) {
-                   user.setKey(userJson.getString("key"));
-                } else {
-                    // Assign a placeholder or generate one if needed, though not strictly necessary for file check
-                    user.setKey("user_" + i);
-                }
-                user.setUserName(userJson.getString("userName"));
-                user.setPassword(userJson.getString("password")); // Assuming password stored directly for now
-                user.setLevel(userJson.optInt("level", 0)); // Use optInt for optional fields
+                user.setKey(userJson.optString("key", "user_" + i)); // Use optString
+                user.setUserName(userJson.optString("userName", null));
+                user.setPassword(userJson.optString("password", null));
+                user.setLevel(userJson.optInt("level", 0));
                 user.setScore(userJson.optInt("score", 0));
                 user.setCoins(userJson.optInt("coins", 0));
+                 if (user.getUserName() == null || user.getPassword() == null) {
+                    Log.e(TAG, "loadUsersFromFile: Loaded user with null username/password at index " + i + ", skipping.");
+                    continue;
+                 }
                 users.add(user);
-                 Log.d(TAG, "Loaded user: " + user.getUserName());
+                Log.d(TAG, "loadUsersFromFile: Successfully loaded user: " + user.getUserName());
             }
-        } catch (IOException | JSONException e) {
-            Log.e(TAG, "Error loading users from file", e);
-            // Consider clearing the list or handling the error appropriately
-             users.clear();
+        } catch (IOException e) {
+             Log.e(TAG, "loadUsersFromFile: IOException reading file.", e);
+             users.clear(); // Clear list on error
+        } catch (JSONException e) {
+            Log.e(TAG, "loadUsersFromFile: JSONException parsing string: " + jsonString, e);
+            users.clear(); // Clear list on error
         } finally {
             if (fis != null) {
-                try {
-                    fis.close();
-                } catch (IOException e) {
-                    Log.e(TAG, "Error closing file input stream", e);
-                }
+                try { fis.close(); } catch (IOException e) { Log.e(TAG, "Error closing FIS", e); }
             }
         }
-         Log.d(TAG, "Finished loading users. Count: " + users.size());
+         Log.d(TAG, "loadUsersFromFile: Finished. Loaded users count: " + users.size());
         return users;
     }
 
     private void saveUsersToFile() {
+        Log.d(TAG, "saveUsersToFile: Attempting to save " + usersList.size() + " users.");
         JSONArray jsonArray = new JSONArray();
         for (User user : usersList) {
+            // Basic check to avoid saving incomplete users
+            if (user.getUserName() == null || user.getPassword() == null || user.getKey() == null) {
+                 Log.w(TAG, "saveUsersToFile: Skipping user with null fields: " + user); 
+                 continue;
+            }
             try {
                 JSONObject userJson = new JSONObject();
-                // Key might be null if user was loaded from an older file without it
-                userJson.put("key", user.getKey() != null ? user.getKey() : "user_" + usersList.indexOf(user));
+                userJson.put("key", user.getKey());
                 userJson.put("userName", user.getUserName());
-                userJson.put("password", user.getPassword()); // Storing password directly (consider hashing in production)
+                userJson.put("password", user.getPassword());
                 userJson.put("level", user.getLevel());
                 userJson.put("score", user.getScore());
                 userJson.put("coins", user.getCoins());
                 jsonArray.put(userJson);
             } catch (JSONException e) {
-                Log.e(TAG, "Error creating JSON for user: " + user.getUserName(), e);
+                Log.e(TAG, "saveUsersToFile: Error creating JSON for user: " + user.getUserName(), e);
             }
         }
 
         String jsonString = jsonArray.toString();
-         Log.d(TAG, "Saving to file: " + jsonString);
+        Log.d(TAG, "saveUsersToFile: Saving JSON string: " + jsonString);
         FileOutputStream fos = null;
         try {
             fos = context.openFileOutput(FILENAME, Context.MODE_PRIVATE);
             fos.write(jsonString.getBytes(StandardCharsets.UTF_8));
-             Log.d(TAG, "Users saved successfully.");
+            Log.i(TAG, "saveUsersToFile: Users saved successfully to " + FILENAME);
         } catch (IOException e) {
-            Log.e(TAG, "Error saving users to file", e);
+            Log.e(TAG, "saveUsersToFile: Error saving users to file", e);
         } finally {
             if (fos != null) {
-                try {
-                    fos.close();
-                } catch (IOException e) {
-                    Log.e(TAG, "Error closing file output stream", e);
-                }
+                try { fos.close(); } catch (IOException e) { Log.e(TAG, "Error closing FOS", e); }
             }
         }
     }
 
     public void saveUser(User user) {
+        Log.d(TAG, "saveUser: Attempting to save user: " + (user != null ? user.getUserName() : "null"));
+        if (user == null || user.getUserName() == null || user.getPassword() == null) {
+             Log.w(TAG, "saveUser: Cannot save null user or user with null name/password.");
+             return;
+        }
+        
         if (!userExists(user.getUserName())) {
-            // Assign a simple key if not present, needed for JSON structure consistency
             if (user.getKey() == null) {
-                 user.setKey("user_" + System.currentTimeMillis()); // Simple unique key
+                user.setKey("user_" + System.currentTimeMillis());
+                Log.d(TAG, "saveUser: Assigned new key: " + user.getKey());
             }
+            Log.i(TAG, "saveUser: Adding new user to list: " + user.getUserName());
             usersList.add(user);
-            saveUsersToFile(); // Save the updated list
-             Log.d(TAG, "User saved: " + user.getUserName());
+            saveUsersToFile();
         } else {
-             Log.w(TAG, "Attempted to save existing user: " + user.getUserName());
+             Log.w(TAG, "saveUser: User already exists, save attempt ignored: " + user.getUserName());
         }
     }
 
     public boolean userExists(String userName) {
-         Log.d(TAG, "Checking existence for user: " + userName);
-         Log.d(TAG, "Current user list size: " + usersList.size());
+        Log.d(TAG, "userExists: Checking for user: " + userName + ". Current list size: " + usersList.size());
+        if (userName == null) return false;
         for (User user : usersList) {
-             Log.d(TAG, "Comparing with: " + user.getUserName());
+             // Log.d(TAG, "userExists: Comparing against: " + user.getUserName());
             if (user.getUserName() != null && user.getUserName().equals(userName)) {
-                 Log.d(TAG, "User found: " + userName);
+                 Log.d(TAG, "userExists: Found match for " + userName);
                 return true;
             }
         }
-         Log.d(TAG, "User not found: " + userName);
+         Log.d(TAG, "userExists: No match found for " + userName);
         return false;
     }
 
-     // Overload for checking User object (used initially, keeping for compatibility if needed)
-     public boolean userExists(User u) {
-        return userExists(u.getUserName());
-     }
-
+     // Overload removed for simplicity unless specifically needed later
+     // public boolean userExists(User u) { ... }
 
     public boolean checkUser(String un, String pw) {
-         Log.d(TAG, "Checking credentials for user: " + un);
+         Log.d(TAG, "checkUser: Checking credentials for user: " + un + ", Pass: [REDACTED]. List size: " + usersList.size());
+         if (un == null || pw == null) return false;
         for (User user : usersList) {
+             Log.d(TAG, "checkUser: Comparing against stored user: " + user.getUserName());
             if (user.getUserName() != null && user.getUserName().equals(un)) {
-                // Direct password comparison (Insecure! Use hashing in real apps)
+                // Found the user by username
+                Log.d(TAG, "checkUser: Found user by name: " + un + ". Checking password.");
                 if (user.getPassword() != null && user.getPassword().equals(pw)) {
-                     Log.d(TAG, "Credentials match for user: " + un);
+                     Log.i(TAG, "checkUser: Credentials MATCH for user: " + un);
                     return true;
                 } else {
-                    Log.d(TAG, "Password mismatch for user: " + un);
+                    Log.w(TAG, "checkUser: Password MISMATCH for user: " + un + ". Stored pass: [REDACTED], Provided pass: [REDACTED]"); // Avoid logging passwords
                     return false; // Found user, but password wrong
                 }
             }
         }
-        Log.d(TAG, "User not found during check: " + un);
+        Log.w(TAG, "checkUser: User NOT FOUND by name: " + un);
         return false; // User not found
     }
 } 

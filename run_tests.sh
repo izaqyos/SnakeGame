@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script to set up environment and run Android instrumented tests
+# Script to set up environment and run Android unit and instrumented tests
 
 # --- Configuration ---
 # Adjust this path if your Android Studio installation differs
@@ -45,16 +45,38 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# 5. Run connected tests
+# 5. Run unit tests
+echo "Running ./gradlew test..."
+./gradlew test
+UNIT_TEST_EXIT_CODE=$?
+
+# 6. Run connected tests
 echo "Running ./gradlew connectedDebugAndroidTest..."
 ./gradlew connectedDebugAndroidTest
-TEST_EXIT_CODE=$?
+CONNECTED_TEST_EXIT_CODE=$?
 
-# 6. Report results
-if [ $TEST_EXIT_CODE -eq 0 ]; then
-  echo "Tests completed successfully!"
+# 7. Report results
+echo "--- Test Summary ---"
+if [ $UNIT_TEST_EXIT_CODE -eq 0 ]; then
+  echo "Unit Tests: PASSED"
 else
-  echo "Tests failed with exit code $TEST_EXIT_CODE."
+  echo "Unit Tests: FAILED (Exit Code: $UNIT_TEST_EXIT_CODE)"
 fi
 
-exit $TEST_EXIT_CODE 
+if [ $CONNECTED_TEST_EXIT_CODE -eq 0 ]; then
+  echo "Instrumented Tests: PASSED"
+else
+  # Note: Instrumented tests might report skipped tests which is not a failure
+  # Check specific error codes if needed, but 0 usually means success.
+  echo "Instrumented Tests: FAILED or SKIPPED (Exit Code: $CONNECTED_TEST_EXIT_CODE)"
+fi
+echo "--------------------"
+
+# Exit with error if any test suite failed
+if [ $UNIT_TEST_EXIT_CODE -ne 0 ] || [ $CONNECTED_TEST_EXIT_CODE -ne 0 ]; then
+  echo "Overall test run failed."
+  exit 1
+else
+  echo "Overall test run successful."
+  exit 0
+fi 

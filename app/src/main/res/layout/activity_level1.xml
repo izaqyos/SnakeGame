@@ -1,16 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".level1">
 
+    <!-- Game Surface Area -->
     <FrameLayout
         android:id="@+id/gameFrame"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-    </FrameLayout>
+        android:layout_height="match_parent"
+        android:layout_above="@+id/controlsLayout" /> 
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- Controls Container -->
+    <RelativeLayout
+        android:id="@+id/controlsLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:padding="16dp"
+        android:background="#DDDDDD"> 
+
+        <!-- Up Button (Centered Top) -->
+        <ImageButton
+            android:id="@+id/buttonUp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentTop="true"
+            android:rotation="-90"
+            android:src="@android:drawable/ic_media_play"
+            android:contentDescription="Up" />
+
+        <!-- Down Button (Centered Below Up) -->
+        <ImageButton
+            android:id="@+id/buttonDown"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@+id/buttonUp"
+            android:layout_marginTop="8dp"
+            android:rotation="90"
+            android:src="@android:drawable/ic_media_play"
+            android:contentDescription="Down" />
+
+        <!-- Left Button (To Left of Down Button) -->
+        <ImageButton
+            android:id="@+id/buttonLeft"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/buttonDown" 
+            android:layout_alignBottom="@+id/buttonDown" 
+            android:layout_toStartOf="@+id/buttonDown"
+            android:layout_marginEnd="16dp" 
+            android:src="@android:drawable/ic_media_previous"
+            android:contentDescription="Left" />
+
+        <!-- Right Button (To Right of Down Button) -->
+        <ImageButton
+            android:id="@+id/buttonRight"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/buttonDown" 
+            android:layout_alignBottom="@+id/buttonDown" 
+            android:layout_toEndOf="@+id/buttonDown"
+            android:layout_marginStart="16dp" 
+            android:src="@android:drawable/ic_media_next"
+            android:contentDescription="Right" />
+
+    </RelativeLayout>
+
+</RelativeLayout>

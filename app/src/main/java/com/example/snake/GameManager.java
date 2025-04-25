@@ -13,21 +13,29 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 public class GameManager extends SurfaceView implements Runnable {
+    // Enum for directions
+    public enum Direction {
+        UP, DOWN, LEFT, RIGHT
+    }
+
     private int scrHeight;
     private int scrWidth;
     private Canvas myCanvas;
     private SurfaceHolder holder;
     private Bitmap snakeBitmap;
-    private Bitmap leftArBitmap;
+    // private Bitmap leftArBitmap; // Commented out custom arrow bitmap
     private Paint bgPaint;
     private AnimatedSprite snake;
-    private AnimatedSprite leftArrow;
-    private Rect leftArrowRect;
+    // private AnimatedSprite leftArrow; // Commented out custom arrow sprite
+    // private Rect leftArrowRect; // Commented out (if it was used)
     private Thread thread;
     private volatile boolean running = false;
-    private int snakeXDirection = 1;
+    // Current direction state
+    private int snakeXDirection = 1; // Start moving right
     private int snakeYDirection = 0;
     private int snakeSpeed = 10;
+    // Keep track of the current direction enum value
+    private Direction currentDirection = Direction.RIGHT;
 
     GameManager(Context context, int width, int height) {
         super(context);
@@ -43,18 +51,18 @@ public class GameManager extends SurfaceView implements Runnable {
         snakeBitmap = Bitmap.createScaledBitmap(snakeBitmap, 40, 40, false);
         snake = new AnimatedSprite(0, 100, snakeBitmap, scrWidth, scrHeight);
 
-        // Load left arrow bitmap
-        leftArBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.leftarrow); // Check this name carefully!
+        /* Commented out custom left arrow loading
+        leftArBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.leftarrow); 
         if (leftArBitmap == null) {
             Log.e("GameManager", "Error loading left arrow bitmap!");
         } else {
             Log.d("GameManager", "Left arrow bitmap loaded successfully: " + leftArBitmap.getWidth() + "x" + leftArBitmap.getHeight());
         }
         int margin = 100;
-        int bottomMargin = 600; // Try a larger value to move the arrow higher up
+        int bottomMargin = 600; 
 
         leftArrow = new AnimatedSprite(margin, scrHeight - bottomMargin, leftArBitmap, scrWidth, scrHeight);
-
+        */
     }
 
     public void start() {
@@ -86,16 +94,35 @@ public class GameManager extends SurfaceView implements Runnable {
         }
     }
 
-    public void onTouch(MotionEvent event) {
-        int x = (int) event.getX();
-        int y = (int) event.getY();
-        Log.d("GameManager", "Touch event at: x=" + x + ", y=" + y);
+    // Method to change the snake's direction
+    public void setDirection(Direction newDirection) {
+        // Prevent reversing direction directly
+        if (currentDirection == Direction.UP && newDirection == Direction.DOWN) return;
+        if (currentDirection == Direction.DOWN && newDirection == Direction.UP) return;
+        if (currentDirection == Direction.LEFT && newDirection == Direction.RIGHT) return;
+        if (currentDirection == Direction.RIGHT && newDirection == Direction.LEFT) return;
 
-        if (leftArrow.inRect(x, y)) {
-            Log.d("GameManager", "Left arrow touched!");
-            snakeXDirection = -1;
-            snakeYDirection = 0;
+        // Update direction state variables
+        switch (newDirection) {
+            case UP:
+                snakeXDirection = 0;
+                snakeYDirection = -1; // Y decreases upwards
+                break;
+            case DOWN:
+                snakeXDirection = 0;
+                snakeYDirection = 1; // Y increases downwards
+                break;
+            case LEFT:
+                snakeXDirection = -1;
+                snakeYDirection = 0;
+                break;
+            case RIGHT:
+                snakeXDirection = 1;
+                snakeYDirection = 0;
+                break;
         }
+        currentDirection = newDirection; // Update the current direction
+        Log.d("GameManager", "Direction set to: " + newDirection);
     }
 
     private void drawSurface() {
@@ -103,7 +130,7 @@ public class GameManager extends SurfaceView implements Runnable {
             myCanvas = holder.lockCanvas();
             myCanvas.drawPaint(bgPaint);
             snake.draw(myCanvas);
-            leftArrow.draw(myCanvas);
+            // leftArrow.draw(myCanvas); // Commented out drawing custom arrow
             holder.unlockCanvasAndPost(myCanvas);
         }
     }

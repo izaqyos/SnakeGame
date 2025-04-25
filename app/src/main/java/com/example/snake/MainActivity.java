@@ -22,24 +22,34 @@ public class MainActivity extends AppCompatActivity {
     private Dialog helpDialog;
 
     public void checkUser(View v){
-        EditText etUserName = findViewById(R.id.etUserName);
-        EditText etPassword = findViewById(R.id.etPassword);
-        String un = etUserName.getText().toString().trim();
-        String pw = etPassword.getText().toString().trim();
+        // Removed reading from EditText fields
+        // EditText etUserName = findViewById(R.id.etUserName);
+        // EditText etPassword = findViewById(R.id.etPassword);
+        // String un = etUserName.getText().toString().trim();
+        // String pw = etPassword.getText().toString().trim();
 
-        if (un.isEmpty() || pw.isEmpty()) {
-            Toast.makeText(this, "Please enter username and password", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        // Hardcode test user credentials
+        String un = "testuser";
+        String pw = "abc123";
+        Log.d("CheckUser", "Attempting login for hardcoded user: " + un);
 
+        // Removed check for empty username/password as it's hardcoded now
+        // if (un.isEmpty() || pw.isEmpty()) { ... }
+
+        // Check hardcoded credentials using file storage
         if(userFileStorage.checkUser(un, pw)){
-            Log.d("CheckUser", "FileStorage: User credentials valid: " + un);
+            Log.d("CheckUser", "FileStorage: Hardcoded test user credentials valid.");
             Intent intent =  new Intent(this, level1.class);
             startActivity(intent);
         } else {
-            Log.d("CheckUser", "FileStorage: Invalid credentials for user: " + un);
-            Toast.makeText(this, "Invalid username or password (File)", Toast.LENGTH_SHORT).show();
+            // This case should not happen if testuser was created correctly
+            Log.e("CheckUser", "FileStorage: Hardcoded test user credentials INVALID! Check UserFileStorage.");
+            Toast.makeText(this, "Test user login failed!", Toast.LENGTH_LONG).show();
         }
+
+        /* Firebase Check (commented out - keep for reference)
+        // if(myFBDB.checkUser(un, pw)){ ... }
+        */
     }
 
     public void toRegister(View v){

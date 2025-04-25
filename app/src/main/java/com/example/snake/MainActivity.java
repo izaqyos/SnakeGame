@@ -53,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         userFileStorage = new UserFileStorage(this);
         myFBDB = new MyFBDB();
+        myFBDB.ensureTestUserExists();
 
         Button helpButton = findViewById(R.id.helpButton);
         helpButton.setOnClickListener(new View.OnClickListener() {

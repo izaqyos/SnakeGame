@@ -86,10 +86,81 @@ SnakeGame/
 
 ## Testing
 
-Currently, no automated tests are implemented. Manual testing:
+Currently, only basic instrumented tests for `UserFileStorage` and `MyFBDB` are implemented. Manual testing:
 - Run the app.
 - Register a new user using the 'Register' button (uses file storage).
 - Log in with the registered user or the test user (`testuser`/`abc123`) using the 'Play' button.
+
+### Running Instrumented Tests from Command Line
+
+A helper script (`run_tests.sh`) is provided to simplify running tests from the command line.
+
+**Using the Test Script:**
+
+1.  **Prerequisites:**
+    *   **Device/Emulator:** Ensure exactly one Android device is connected via USB (with USB Debugging enabled) OR one Android emulator is running.
+    *   **Verify JDK Path (First time):** Open `run_tests.sh` and confirm the `STUDIO_JDK_PATH` variable points to the correct embedded JDK location within your Android Studio application bundle (usually `/Applications/Android Studio.app/Contents/jbr/Contents/Home`). Adjust if necessary.
+2.  **Make Script Executable (First time):** In your terminal, from the project root directory (`SnakeGame`), run:
+    ```bash
+    chmod +x run_tests.sh
+    ```
+3.  **Run the Script:** From the project root directory, execute:
+    ```bash
+    ./run_tests.sh
+    ```
+
+This script will automatically:
+*   Set the `JAVA_HOME` environment variable.
+*   Ensure `gradlew` has execute permissions.
+*   Run `./gradlew clean`.
+*   Run `./gradlew connectedDebugAndroidTest`.
+*   Report the success or failure status.
+
+**Manual Command (Alternative):**
+
+If you prefer not to use the script, you still need to ensure the prerequisites are met manually:
+
+1.  **Device/Emulator:** As above.
+2.  **JDK Configuration:** Ensure `JAVA_HOME` is set correctly in your terminal (see script for example path).
+3.  **Gradle Wrapper Permissions (macOS/Linux):** Ensure `./gradlew` is executable (`chmod +x gradlew`).
+
+Then, run the Gradle command directly:
+
+```bash
+./gradlew connectedDebugAndroidTest
+```
+
+### Viewing Test Reports
+
+After running the instrumented tests (either via the script or manually), an HTML report is generated.
+
+**Report Location:**
+`app/build/reports/androidTests/connected/debug/index.html`
+
+**Viewing Options:**
+
+1.  **Open Directly (macOS):**
+    From the project root directory, run:
+    ```bash
+    open app/build/reports/androidTests/connected/debug/index.html
+    ```
+
+2.  **Serve via Python 3:**
+    Navigate to the report directory and start a simple HTTP server:
+    ```bash
+    cd app/build/reports/androidTests/connected/debug/
+    python3 -m http.server
+    # Now open http://localhost:8000 (or the port indicated) in your browser.
+    # Press Ctrl+C to stop. Remember to cd back to the project root.
+    ```
+
+3.  **Serve via Node.js/npx:**
+    If you have Node.js/npm, run this from the project root:
+    ```bash
+    npx serve app/build/reports/androidTests/connected/debug/
+    # Open the localhost URL provided in the output (e.g., http://localhost:3000).
+    # Press Ctrl+C to stop.
+    ```
 
 ## Contributing
 

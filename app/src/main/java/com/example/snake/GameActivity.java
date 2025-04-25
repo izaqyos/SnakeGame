@@ -1,7 +1,7 @@
 package com.example.snake;
 
 import android.os.Bundle;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
@@ -24,11 +24,11 @@ public class GameActivity extends AppCompatActivity {
         gameManager = new GameManager(this, this);
         gameSurfaceContainer.addView(gameManager);
 
-        // Find buttons from activity_game.xml
-        Button buttonUp = findViewById(R.id.buttonUp);
-        Button buttonDown = findViewById(R.id.buttonDown);
-        Button buttonLeft = findViewById(R.id.buttonLeft);
-        Button buttonRight = findViewById(R.id.buttonRight);
+        // Find buttons as ImageButtons
+        ImageButton buttonUp = findViewById(R.id.buttonUp);
+        ImageButton buttonDown = findViewById(R.id.buttonDown);
+        ImageButton buttonLeft = findViewById(R.id.buttonLeft);
+        ImageButton buttonRight = findViewById(R.id.buttonRight);
 
         // Set listeners using GameManager.Direction
         buttonUp.setOnClickListener(v -> gameManager.setDirection(GameManager.Direction.UP));

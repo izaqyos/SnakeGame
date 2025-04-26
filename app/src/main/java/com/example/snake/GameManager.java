@@ -45,7 +45,7 @@ public class GameManager extends SurfaceView implements Runnable, SurfaceHolder.
     private Point foodPosition = new Point();
     private Random random = new Random();
     // private long nextFrameTime; // Not used in current loop implementation
-    private final long FRAME_RATE_MS = 150;
+    private final long FRAME_RATE_MS = 200; // Slower frame rate (from 100)
 
     // Updated Constructor to accept GameActivity
     GameManager(Context context, GameActivity activity) {

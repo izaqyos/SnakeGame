@@ -49,6 +49,21 @@ public class MainActivity extends AppCompatActivity {
 
     // Method called by Play button's onClick
     public void checkUser(View v) {
+        // ------ TEMPORARY BYPASS FOR TESTING ------
+        Log.d("CheckUser", "Bypassing login, starting game as testuser...");
+        // Ensure testuser exists (or create it if needed)
+        if (!userFileStorage.userExists("testuser")) {
+             userFileStorage.saveUser(new User("testuser", "password", 0, 0, 0));
+             Log.i("CheckUser", "Created testuser for bypass.");
+        }
+        Intent intent = new Intent(this, GameActivity.class);
+        // intent.putExtra("USERNAME", "testuser"); // Pass username if needed
+        startActivity(intent);
+        // finish(); // Optional: finish MainActivity
+        return; // Skip the actual credential check below
+        // ------ END TEMPORARY BYPASS ------
+
+        /*  // Original Login Logic (commented out)
         String un = etUserName.getText().toString().trim();
         String pw = etPassword.getText().toString().trim();
         Log.d("CheckUser", "Attempting login for user: " + un);
@@ -61,7 +76,6 @@ public class MainActivity extends AppCompatActivity {
         // Use file storage check (primary method now)
         if (userFileStorage.checkUser(un, pw)) {
             Log.d("CheckUser", "FileStorage: User credentials valid.");
-            // ** Start GameActivity instead of level1 **
             Intent intent = new Intent(this, GameActivity.class);
             // Optional: Pass username to GameActivity if needed later
             // intent.putExtra("USERNAME", un);
@@ -72,11 +86,8 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Invalid username or password.", Toast.LENGTH_LONG).show();
         }
 
-        /* Firebase Check (inactive - keep for reference)
-        if(myFBDB.checkUser(un, pw)){
-             Intent intent = new Intent(this, GameActivity.class); // Also start GameActivity if using FB
-             startActivity(intent);
-        }
+        // Firebase Check (inactive - keep for reference)
+        // if(myFBDB.checkUser(un, pw)){ ... }
         */
     }
 

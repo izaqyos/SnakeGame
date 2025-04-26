@@ -5,6 +5,7 @@ import android.widget.ImageButton;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
+import android.content.Intent;
 
 public class GameActivity extends AppCompatActivity {
 
@@ -29,12 +30,21 @@ public class GameActivity extends AppCompatActivity {
         ImageButton buttonDown = findViewById(R.id.buttonDown);
         ImageButton buttonLeft = findViewById(R.id.buttonLeft);
         ImageButton buttonRight = findViewById(R.id.buttonRight);
+        ImageButton backButton = findViewById(R.id.backButton);
 
         // Set listeners using GameManager.Direction
         buttonUp.setOnClickListener(v -> gameManager.setDirection(GameManager.Direction.UP));
         buttonDown.setOnClickListener(v -> gameManager.setDirection(GameManager.Direction.DOWN));
         buttonLeft.setOnClickListener(v -> gameManager.setDirection(GameManager.Direction.LEFT));
         buttonRight.setOnClickListener(v -> gameManager.setDirection(GameManager.Direction.RIGHT));
+
+        // Set listener for back button
+        backButton.setOnClickListener(v -> {
+            Intent intent = new Intent(GameActivity.this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            finish();
+        });
     }
 
     @Override

@@ -48,6 +48,18 @@
         <!-- GameManager (SurfaceView) will be added here programmatically -->
     </FrameLayout>
 
+    <Button
+        android:id="@+id/restartButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Restart"
+        android:visibility="gone" 
+        app:layout_constraintBottom_toBottomOf="@+id/gameSurfaceContainer"
+        app:layout_constraintEnd_toEndOf="@+id/gameSurfaceContainer"
+        app:layout_constraintStart_toStartOf="@+id/gameSurfaceContainer"
+        app:layout_constraintTop_toTopOf="@+id/gameSurfaceContainer"
+        app:layout_constraintVertical_bias="0.65" />
+
     <LinearLayout
         android:id="@+id/controlsLayout"
         android:layout_width="wrap_content"

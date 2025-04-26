@@ -142,6 +142,7 @@ public class GameManager extends SurfaceView implements Runnable, SurfaceHolder.
         score = 0;
         currentDirection = Direction.RIGHT;
         isGameOver = false;
+        // gameActivity.hideRestartButton(); // No, GameActivity handles this on button click
 
         // Center starting position based on actual surface dimensions
         int startX = (scrWidth / segmentSize / 2) * segmentSize;
@@ -216,6 +217,7 @@ public class GameManager extends SurfaceView implements Runnable, SurfaceHolder.
         if (newX < 0 || newX >= scrWidth || newY < 0 || newY >= scrHeight) {
             Log.w("GameManager", "Collision with border detected.");
             isGameOver = true;
+            gameActivity.showRestartButton(); // Show restart button
             return;
         }
 
@@ -226,6 +228,7 @@ public class GameManager extends SurfaceView implements Runnable, SurfaceHolder.
             if (newX == segment.x && newY == segment.y) {
                 Log.w("GameManager", "Collision with self detected.");
                 isGameOver = true;
+                gameActivity.showRestartButton(); // Show restart button
                 return;
             }
         }
@@ -333,5 +336,11 @@ public class GameManager extends SurfaceView implements Runnable, SurfaceHolder.
         Log.i("GameManager", "Surface destroyed.");
         surfaceReady = false;
         stopGameLoop(); // Stop the game thread cleanly
+    }
+
+    // Public method to be called by GameActivity's restart button
+    public void restartGame() {
+        // No need to stop/start thread, just re-initialize game state
+        initGame();
     }
 }

@@ -31,6 +31,53 @@ The project uses a simple structure centered around `MainActivity` hosting a cus
     *   Contains `TextView` (`scoreTextView`) at the top.
     *   Contains `FrameLayout` (`gameSurfaceContainer`) in the center to hold the `GameManager`.
     *   Contains `LinearLayout` (`controlsLayout`) at the bottom with four `Button`s for directions.
+    *   Includes a `Button` (`restartButton`) centered on the game surface, initially hidden.
+    *   Includes an `ImageButton` (`backButton`) in the top-left corner.
+
+### Core Gameplay Loop and Interaction (For New Developers)
+
+1.  **Initialization:**
+    *   `MainActivity` (`GameActivity` is the actual class name used) starts and sets its layout (`activity_game.xml`).
+    *   It creates an instance of `GameManager` (a `SurfaceView`) and adds it to the `gameSurfaceContainer` FrameLayout.
+    *   It finds UI elements: score `TextView`, direction `ImageButton`s, back `ImageButton`, and restart `Button`.
+    *   It sets `OnClickListener`s for the direction buttons, which call `gameManager.setDirection()`.
+    *   It sets an `OnClickListener` for the back button to navigate back to `MainActivity`.
+    *   It sets an `OnClickListener` for the restart button to call `gameManager.restartGame()`.
+2.  **Surface Ready:**
+    *   When the `GameManager`'s surface is created and its size is known (`surfaceChanged`), it calls `initGame()`.
+    *   `initGame()`: Resets the score, snake position/segments, places initial food, sets `isGameOver` to false, and calls `gameActivity.updateScore()`.
+    *   `surfaceChanged` then calls `startGameLoop()` which creates and starts the game thread if not already running.
+3.  **Game Loop (`GameManager.run()`):**
+    *   This loop runs continuously on a background thread while `running` is true.
+    *   Inside the loop, if the game is not over (`!isGameOver`) and the surface is ready:
+        *   `updateGame()` is called:
+            *   Calculates the snake's next head position based on `currentDirection`.
+            *   Checks for border collisions (sets `isGameOver = true`, calls `gameActivity.showRestartButton()`).
+            *   Checks for self-collisions (sets `isGameOver = true`, calls `gameActivity.showRestartButton()`).
+            *   If no collision: Adds the new head. Checks if the new head is on food.
+            *   If food eaten: Increments score, calls `gameActivity.updateScore()`, calls `placeFood()`, *doesn't* remove the tail (snake grows).
+            *   If no food eaten: Removes the tail segment.
+        *   `drawSurface()` is called:
+            *   Locks the `Canvas`.
+            *   Draws the background, food, snake segments.
+            *   If `isGameOver` is true, draws "Game Over!" text.
+            *   Unlocks and posts the `Canvas`.
+    *   The loop then calculates the time taken for the update/draw and sleeps for `FRAME_RATE_MS` minus the elapsed time to control the speed (currently `200ms`).
+4.  **Game Over:**
+    *   When a collision occurs, `isGameOver` is set to true.
+    *   The `GameManager` calls `gameActivity.showRestartButton()` to make the restart button visible.
+    *   The `run()` loop stops calling `updateGame()` but continues calling `drawSurface()` (to keep showing the "Game Over!" message).
+5.  **Restart:**
+    *   User clicks the restart button.
+    *   `GameActivity`'s listener calls `gameManager.restartGame()`.
+    *   `gameManager.restartGame()` simply calls `initGame()` again, resetting the state.
+    *   `GameActivity`'s listener also calls `hideRestartButton()`.
+6.  **Pause/Resume:**
+    *   `MainActivity.onPause()` calls `gameManager.pause()`, which sets `running = false`, stopping the `run()` loop's logic execution.
+    *   `MainActivity.onResume()` calls `gameManager.resume()`, which sets `running = true`, allowing the loop logic to execute again. If the surface was destroyed and recreated, `surfaceChanged` will handle restarting the thread via `startGameLoop()`.
+7.  **Back Navigation:**
+    *   User clicks the back button.
+    *   `GameActivity`'s listener creates an `Intent` for `MainActivity`, clears the task stack above it, starts `MainActivity`, and finishes `GameActivity`.
 
 ### Authentication/User Management (Legacy/Inactive)
 - **Code:** `UserFileStorage.java`, `MyFBDB.java`, `User.java`, `RegActivityFile.java`, `RegActivityFB.java`.
@@ -63,10 +110,3 @@ Key dependencies include:
 - Firebase Realtime Database (`firebase-database`)
 - Google Play Services plugin (`google-gms-google-services`)
 - Kotlin standard library (via `org.jetbrains.kotlin.android` plugin)
-
-## 6. Project Timeline
-
-1. **Week 1-2**: Project setup and authentication implementation
-2. **Week 3-4**: Core game mechanics and basic UI
-3. **Week 5-6**: Score management and leaderboard
-4. **Week 7-8**: Testing, polish, and release preparation 

@@ -6,12 +6,15 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
+import android.view.View;
+import android.widget.Button;
 
 public class GameActivity extends AppCompatActivity {
 
     private GameManager gameManager;
     private TextView scoreTextView;
     private FrameLayout gameSurfaceContainer;
+    private Button restartButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +34,7 @@ public class GameActivity extends AppCompatActivity {
         ImageButton buttonLeft = findViewById(R.id.buttonLeft);
         ImageButton buttonRight = findViewById(R.id.buttonRight);
         ImageButton backButton = findViewById(R.id.backButton);
+        restartButton = findViewById(R.id.restartButton);
 
         // Set listeners using GameManager.Direction
         buttonUp.setOnClickListener(v -> gameManager.setDirection(GameManager.Direction.UP));
@@ -44,6 +48,12 @@ public class GameActivity extends AppCompatActivity {
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
             finish();
+        });
+
+        // Set listener for restart button
+        restartButton.setOnClickListener(v -> {
+            gameManager.restartGame();
+            hideRestartButton();
         });
     }
 
@@ -69,6 +79,24 @@ public class GameActivity extends AppCompatActivity {
         runOnUiThread(() -> {
             if (scoreTextView != null) {
                 scoreTextView.setText("Score: " + score);
+            }
+        });
+    }
+
+    // Method for GameManager to call to show the restart button
+    public void showRestartButton() {
+        runOnUiThread(() -> {
+            if (restartButton != null) {
+                restartButton.setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
+    // Method to hide the restart button (called from GameActivity)
+    private void hideRestartButton() {
+        runOnUiThread(() -> {
+            if (restartButton != null) {
+                restartButton.setVisibility(View.GONE);
             }
         });
     }

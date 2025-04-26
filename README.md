@@ -11,6 +11,9 @@ An Android implementation of the classic Snake game with user registration/login
     - Collision detection with walls and self.
     - Score tracking displayed on screen.
     - Game over state.
+    - Adjustable game speed (currently set via `FRAME_RATE_MS` in `GameManager`).
+    - Back button to return to the main (login/user) screen.
+    - Restart button appears on Game Over.
 - **Legacy/Inactive Code:** Firebase user storage (`MyFBDB.java`, `RegActivityFB.java`) exists but is not the primary path.
 
 ## Technical Stack

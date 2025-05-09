@@ -16,6 +16,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Close"
+        android:textColor="#ba1160"
+        android:background="@drawable/pink_button"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="16dp" />
 </LinearLayout>

@@ -22,7 +22,7 @@
             android:name=".RegActivityFB"
             android:exported="false" />
         <activity
-            android:name=".level2"
+            android:name=".settings"
             android:exported="false" />
         <activity
             android:name=".GameActivity"
@@ -32,10 +32,12 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service android:name=".BackgroundMusicService" />
+
     </application>
 
 </manifest>

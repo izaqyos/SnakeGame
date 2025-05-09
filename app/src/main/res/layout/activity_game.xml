@@ -19,6 +19,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <ImageButton
+        android:id="@+id/buttonSettings2"
+        android:layout_width="55dp"
+        android:layout_height="54dp"
+        android:layout_marginEnd="4dp"
+        android:layout_marginBottom="2dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/settings" />
+
     <TextView
         android:id="@+id/scoreTextView"
         android:layout_width="0dp"
@@ -27,6 +37,7 @@
         android:gravity="center"
         android:padding="8dp"
         android:text="Score: 0"
+        android:textColor="#ba1160"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -40,7 +51,7 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="8dp"
-        android:background="#D3D3D3"
+        android:background="#ba1160"
         app:layout_constraintBottom_toTopOf="@+id/controlsLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -53,6 +64,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Restart"
+        android:textColor="#ba1160"
+        android:background="@drawable/pink_button"
         android:visibility="gone" 
         app:layout_constraintBottom_toBottomOf="@+id/gameSurfaceContainer"
         app:layout_constraintEnd_toEndOf="@+id/gameSurfaceContainer"

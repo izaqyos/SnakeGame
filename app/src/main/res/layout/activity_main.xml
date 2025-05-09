@@ -5,18 +5,32 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp" 
+    android:padding="16dp"
+    android:background="@drawable/main_back"
     tools:context=".MainActivity">
+
+    <ImageView
+        android:id="@+id/background_image"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scaleType="centerCrop"
+        app:layout_constraintWidth_percent="1"
+        app:layout_constraintHeight_percent="1"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
     <EditText
         android:id="@+id/etUserName"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="100dp"
+        android:layout_marginTop="324dp"
         android:ems="10"
         android:hint="Enter User Name"
         android:inputType="text"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -39,6 +53,8 @@
         android:layout_marginTop="32dp"
         android:onClick="checkUser"
         android:text="Play"
+        android:textColor="#ba1160"
+        android:background="@drawable/pink_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/etPassword" />
@@ -50,6 +66,8 @@
         android:layout_marginTop="16dp"
         android:onClick="toRegister"
         android:text="Register"
+        android:textColor="#ba1160"
+        android:background="@drawable/pink_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/startGameButton" />
@@ -61,8 +79,44 @@
         android:layout_marginTop="16dp"
         android:onClick="showHelpDialog"
         android:text="Help"
+        android:textColor="#ba1160"
+        android:background="@drawable/pink_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/registerButton" />
+        app:layout_constraintTop_toBottomOf="@+id/registerButton"
+        />
+
+    <TextView
+        android:id="@+id/welcome"
+        android:layout_width="334dp"
+        android:layout_height="47dp"
+        android:layout_marginStart="36dp"
+        android:layout_marginTop="16dp"
+        android:text=" welcome to"
+        android:textColor="@color/specific_pink"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textViewSnake"
+        android:layout_width="324dp"
+        android:layout_height="140dp"
+        android:layout_marginStart="36dp"
+        android:layout_marginTop="4dp"
+        android:text="SNAKE"
+        android:textColor="@color/snake"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/welcome" />
+
+    <ImageButton
+        android:id="@+id/imageButtonSettings"
+        android:layout_width="55dp"
+        android:layout_height="54dp"
+        android:layout_marginEnd="4dp"
+        android:layout_marginBottom="2dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/settings" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

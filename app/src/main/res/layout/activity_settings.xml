@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/main_back"
+    tools:context=".settings">
+
+    <ImageButton
+        android:id="@+id/backButton3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="16dp" app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Back"
+        android:src="@android:drawable/ic_media_previous" />
+
+    <LinearLayout
+        android:id="@+id/musicSettingsLayout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="32dp"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintVertical_bias="0.1"
+        tools:ignore="UnusedAttribute" /> <Switch
+    android:id="@+id/musicSwitch"
+    android:layout_width="wrap_content" android:layout_height="wrap_content" android:minHeight="48dp" android:text="MUSIC"
+    android:textColor="#ba1160"
+    android:textSize="18sp" android:layout_marginStart="32dp"
+    android:layout_marginTop="32dp"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/musicSettingsLayout" /> <TextView
+    android:id="@+id/textView_snake_color_label"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Select Snake Color:"
+    android:textSize="18sp"
+    android:textColor="@android:color/black" android:layout_marginTop="32dp"
+    app:layout_constraintTop_toBottomOf="@+id/musicSwitch"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintEnd_toEndOf="parent" />
+
+    <LinearLayout
+        android:id="@+id/linearLayout_color_buttons"
+        android:layout_width="0dp" android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@+id/textView_snake_color_label"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/backButton3"
+        app:layout_constraintVertical_bias="0.0"> <Button
+        android:id="@+id/button_color_green"
+        style="@style/Widget.AppCompat.Button.Colored" android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="4dp"
+        android:text="Green Snake"
+        app:backgroundTint="#4CAF50" /> <Button
+        android:id="@+id/button_color_red"
+        style="@style/Widget.AppCompat.Button.Colored"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:text="Red Snake"
+        app:backgroundTint="#F44336" />
+
+        <Button
+            android:id="@+id/button_color_blue"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
+            android:text="Blue Snake"
+            app:backgroundTint="#2196F3" />
+
+        <Button
+            android:id="@+id/button_color_yellow"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
+            android:text="Yellow Snake"
+            android:textColor="@android:color/black" app:backgroundTint="#FFEB3B" />
+
+        <Button
+            android:id="@+id/button_color_white"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
+            android:text="White Snake"
+            android:textColor="@android:color/black" app:backgroundTint="#FFFFFF" />
+
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -2,11 +2,13 @@ package com.example.snake;
 
 import android.app.Dialog;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -45,6 +47,24 @@ public class MainActivity extends AppCompatActivity {
 
         Button closeButton = helpDialog.findViewById(R.id.closeButton);
         closeButton.setOnClickListener(v -> helpDialog.dismiss());
+
+        TextView welcomeTextView = findViewById(R.id.welcome);
+        TextView snakeTextView = findViewById(R.id.textViewSnake);
+        Typeface typeface = getResources().getFont(R.font.fascinaregular);
+        welcomeTextView.setTypeface(typeface);
+        snakeTextView.setTypeface(typeface);
+        snakeTextView.setTextSize(95);
+        welcomeTextView.setTextSize(45);
+
+        ImageButton backButton = findViewById(R.id.imageButtonSettings);
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, settings.class);
+                startActivity(intent);
+                finish();
+            }
+        });
     }
 
     // Method called by Play button's onClick

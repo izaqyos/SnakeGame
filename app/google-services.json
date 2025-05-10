@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "35057151168",
+    "firebase_url": "https://snakegame-b3319-default-rtdb.europe-west1.firebasedatabase.app",
     "project_id": "snakegame-b3319",
     "storage_bucket": "snakegame-b3319.firebasestorage.app"
   },

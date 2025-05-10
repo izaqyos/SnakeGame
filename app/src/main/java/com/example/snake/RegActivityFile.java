@@ -18,6 +18,7 @@ public class RegActivityFile extends AppCompatActivity {
     private Button registerButton;
     private TextView errorTextView;
     private UserFileStorage userFileStorage;
+    private MyFBDB myFBDB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,10 +40,12 @@ public class RegActivityFile extends AppCompatActivity {
         registerButton = findViewById(R.id.registerConfirmButton);
         errorTextView = findViewById(R.id.registerErrorTextView);
         userFileStorage = new UserFileStorage(this);
+        myFBDB = new MyFBDB();
 
         registerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Toast.makeText(RegActivityFile.this, "Register button clicked", Toast.LENGTH_SHORT).show();
                 String username = usernameEditText.getText().toString().trim();
                 String password = passwordEditText.getText().toString().trim();
 
@@ -53,17 +56,41 @@ public class RegActivityFile extends AppCompatActivity {
                 }
 
                 if (userFileStorage.userExists(username)) {
-                    errorTextView.setText("Username already exists. Please choose another.");
+                    errorTextView.setText("Username already exists locally. Please choose another.");
                     errorTextView.setVisibility(View.VISIBLE);
                     return;
                 }
                 User newUser = new User(username, password, 0, 0, 0);
-                userFileStorage.saveUser(newUser);
-
-                Toast.makeText(RegActivityFile.this, "Registration successful!", Toast.LENGTH_SHORT).show();
-                // Intent intent = new Intent(RegActivityFile.this, level1.class);
-                // startActivity(intent);
-                finish(); // Close the registration activity
+                // Use async Firebase check
+                registerButton.setEnabled(false);
+                myFBDB.userExistsAsync(username, new MyFBDB.UserExistsCallback() {
+                    @Override
+                    public void onResult(boolean exists, Exception error) {
+                        runOnUiThread(() -> {
+                            Toast.makeText(RegActivityFile.this, "Firebase callback fired", Toast.LENGTH_SHORT).show();
+                            registerButton.setEnabled(true);
+                            if (error != null) {
+                                errorTextView.setText("Error checking cloud: " + error.getMessage());
+                                errorTextView.setVisibility(View.VISIBLE);
+                                return;
+                            }
+                            if (exists) {
+                                errorTextView.setText("Username already exists in cloud. Please choose another.");
+                                errorTextView.setVisibility(View.VISIBLE);
+                                return;
+                            }
+                            try {
+                                userFileStorage.saveUser(newUser);
+                                myFBDB.saveUser(newUser);
+                                Toast.makeText(RegActivityFile.this, "Registration successful!", Toast.LENGTH_SHORT).show();
+                                finish(); // Close the registration activity
+                            } catch (Exception e) {
+                                errorTextView.setText("Error saving user: " + e.getMessage());
+                                errorTextView.setVisibility(View.VISIBLE);
+                            }
+                        });
+                    }
+                });
             }
         });
     }

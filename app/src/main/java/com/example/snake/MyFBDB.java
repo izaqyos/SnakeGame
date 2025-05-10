@@ -49,49 +49,64 @@ public class MyFBDB {
         Log.d(TAG, "MyFBDB constructor entry.");
         // Remove the static check - always initialize for this instance
         Log.d(TAG, "Initializing FirebaseDatabase instance for this MyFBDB object...");
-        database = FirebaseDatabase.getInstance();
-        if (database == null) {
-             Log.e(TAG, "FirebaseDatabase.getInstance() returned null!");
-             // Handle error appropriately - maybe throw exception?
-             return; 
-        }
-        Log.d(TAG, "FirebaseDatabase instance obtained.");
-        myRef = database.getReference("Users");
-        Log.d(TAG, "Got DatabaseReference for /Users. Attaching ValueEventListener...");
-        myRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                Log.d(TAG, TAG + " | onDataChange received for instance: " + MyFBDB.this.hashCode());
-                List<User> tempList = new ArrayList<>();
-                for (DataSnapshot dataSnapshot1 : dataSnapshot.getChildren()) {
-                    User user = dataSnapshot1.getValue(User.class);
-                    if (user != null) { 
-                       tempList.add(user);
-                       Log.d(TAG, TAG + " | Loaded User: " + user.toString());
-                    } else {
-                        Log.w(TAG, TAG + " | Found null user data in snapshot: " + dataSnapshot1.getKey());
+        try {
+            // Explicitly set the database URL
+            String dbUrl = "https://snakegame-b3319-default-rtdb.europe-west1.firebasedatabase.app/";
+            Log.d(TAG, "Trying to connect to Firebase URL: " + dbUrl);
+            database = FirebaseDatabase.getInstance(dbUrl);
+            
+            if (database == null) {
+                 Log.e(TAG, "FirebaseDatabase.getInstance() returned null!");
+                 // Handle error appropriately - maybe throw exception?
+                 return; 
+            }
+            Log.d(TAG, "FirebaseDatabase instance obtained.");
+            myRef = database.getReference("Users");
+            Log.d(TAG, "Got DatabaseReference for /Users. Attaching ValueEventListener...");
+            
+            // Test write to verify connection
+            DatabaseReference testRef = database.getReference("connection_test");
+            testRef.setValue("connected_at_" + System.currentTimeMillis())
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "Test write SUCCESS - connection confirmed"))
+                .addOnFailureListener(e -> Log.e(TAG, "Test write FAILED - connection error: " + e.getMessage()));
+                
+            myRef.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    Log.d(TAG, TAG + " | onDataChange received for instance: " + MyFBDB.this.hashCode());
+                    List<User> tempList = new ArrayList<>();
+                    for (DataSnapshot dataSnapshot1 : dataSnapshot.getChildren()) {
+                        User user = dataSnapshot1.getValue(User.class);
+                        if (user != null) { 
+                           tempList.add(user);
+                           Log.d(TAG, TAG + " | Loaded User: " + user.toString());
+                        } else {
+                            Log.w(TAG, TAG + " | Found null user data in snapshot: " + dataSnapshot1.getKey());
+                        }
+                    }
+                    // Update the instance list
+                    usersArrayList.clear();
+                    usersArrayList.addAll(tempList);
+                    Log.d(TAG, TAG + " | Instance usersArrayList updated. Size: " + usersArrayList.size());
+
+                    Log.d(TAG, "Notifying " + dataLoadListeners.size() + " instance listeners about data load.");
+                    for (DataLoadListener listener : dataLoadListeners) {
+                        listener.onDataLoaded();
                     }
                 }
-                // Update the instance list
-                usersArrayList.clear();
-                usersArrayList.addAll(tempList);
-                Log.d(TAG, TAG + " | Instance usersArrayList updated. Size: " + usersArrayList.size());
 
-                Log.d(TAG, "Notifying " + dataLoadListeners.size() + " instance listeners about data load.");
-                for (DataLoadListener listener : dataLoadListeners) {
-                    listener.onDataLoaded();
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    Log.w(TAG, "Failed to read value for instance: "+ MyFBDB.this.hashCode(), error.toException());
+                    for (DataLoadListener listener : dataLoadListeners) {
+                        listener.onDataLoadError(error);
+                    }
                 }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-                Log.w(TAG, "Failed to read value for instance: "+ MyFBDB.this.hashCode(), error.toException());
-                for (DataLoadListener listener : dataLoadListeners) {
-                    listener.onDataLoadError(error);
-                }
-            }
-        });
-        Log.d(TAG, "ValueEventListener attached for instance: " + this.hashCode());
+            });
+            Log.d(TAG, "ValueEventListener attached for instance: " + this.hashCode());
+        } catch (Exception e) {
+            Log.e(TAG, "Error initializing Firebase: " + e.getMessage());
+        }
         Log.d(TAG, "MyFBDB constructor exit.");
     }
 
@@ -164,5 +179,42 @@ public class MyFBDB {
                 Log.e(TAG, "ensureTestUserExists: Database error during single event check.", databaseError.toException());
             }
         });
+    }
+
+    // Async callback interface for username existence
+    public interface UserExistsCallback {
+        void onResult(boolean exists, Exception error);
+    }
+
+    // Async check for username existence in Firebase
+    public void userExistsAsync(String username, UserExistsCallback callback) {
+        Log.d(TAG, "userExistsAsync called for username: " + username);
+        if (myRef == null) {
+            Log.e(TAG, "Database reference not initialized");
+            callback.onResult(false, new Exception("Database reference not initialized"));
+            return;
+        }
+        
+        try {
+            Log.d(TAG, "Creating query: orderByChild(\"userName\").equalTo(\"" + username + "\")");
+            myRef.orderByChild("userName").equalTo(username).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    Log.d(TAG, "onDataChange for userExistsAsync, exists: " + dataSnapshot.exists() + ", count: " + dataSnapshot.getChildrenCount());
+                    boolean exists = dataSnapshot.exists();
+                    Log.d(TAG, "Calling callback.onResult with exists=" + exists);
+                    callback.onResult(exists, null);
+                }
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    Log.e(TAG, "onCancelled for userExistsAsync: " + databaseError.getMessage() + ", code: " + databaseError.getCode());
+                    callback.onResult(false, databaseError.toException());
+                }
+            });
+            Log.d(TAG, "Added SingleValueEvent listener for username check");
+        } catch (Exception e) {
+            Log.e(TAG, "Exception in userExistsAsync: " + e.getMessage());
+            callback.onResult(false, e);
+        }
     }
 }

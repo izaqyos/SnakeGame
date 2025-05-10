@@ -217,4 +217,184 @@ public class MyFBDB {
             callback.onResult(false, e);
         }
     }
+
+    // Callback interface for login result
+    public interface LoginCallback {
+        void onResult(boolean isValid, Exception error);
+    }
+
+    // Async check for username and password against Firebase
+    public void checkUserAsync(String username, String password, LoginCallback callback) {
+        Log.d(TAG, "checkUserAsync called for username: " + username);
+        if (myRef == null) {
+            Log.e(TAG, "Database reference not initialized");
+            callback.onResult(false, new Exception("Database reference not initialized"));
+            return;
+        }
+        
+        try {
+            Log.d(TAG, "Creating query to check credentials");
+            myRef.orderByChild("userName").equalTo(username).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    Log.d(TAG, "onDataChange for checkUserAsync, results count: " + dataSnapshot.getChildrenCount());
+                    boolean isValid = false;
+                    
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        User user = snapshot.getValue(User.class);
+                        if (user != null && user.userName != null && user.userName.equals(username) 
+                            && user.password != null && user.password.equals(password)) {
+                            isValid = true;
+                            Log.d(TAG, "Found matching credentials for user: " + username);
+                            break;
+                        }
+                    }
+                    
+                    Log.d(TAG, "Calling callback.onResult with isValid=" + isValid);
+                    callback.onResult(isValid, null);
+                }
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    Log.e(TAG, "onCancelled for checkUserAsync: " + databaseError.getMessage() + ", code: " + databaseError.getCode());
+                    callback.onResult(false, databaseError.toException());
+                }
+            });
+            Log.d(TAG, "Added SingleValueEvent listener for credential check");
+        } catch (Exception e) {
+            Log.e(TAG, "Exception in checkUserAsync: " + e.getMessage());
+            callback.onResult(false, e);
+        }
+    }
+
+    // Callback interface for high score operations
+    public interface ScoreCallback {
+        void onResult(int score, Exception error);
+    }
+
+    // Get high score for a specific user
+    public void getUserHighScore(String username, ScoreCallback callback) {
+        Log.d(TAG, "getUserHighScore called for username: " + username);
+        if (myRef == null) {
+            callback.onResult(0, new Exception("Database reference not initialized"));
+            return;
+        }
+        
+        try {
+            Log.d(TAG, "Creating query to check user's high score");
+            myRef.orderByChild("userName").equalTo(username).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    Log.d(TAG, "onDataChange for getUserHighScore, results count: " + dataSnapshot.getChildrenCount());
+                    int highScore = 0;
+                    
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        User user = snapshot.getValue(User.class);
+                        if (user != null && user.userName != null && user.userName.equals(username)) {
+                            highScore = user.score;
+                            Log.d(TAG, "Found high score " + highScore + " for user: " + username);
+                            break;
+                        }
+                    }
+                    
+                    Log.d(TAG, "Calling callback.onResult with highScore=" + highScore);
+                    callback.onResult(highScore, null);
+                }
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    Log.e(TAG, "onCancelled for getUserHighScore: " + databaseError.getMessage());
+                    callback.onResult(0, databaseError.toException());
+                }
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "Exception in getUserHighScore: " + e.getMessage());
+            callback.onResult(0, e);
+        }
+    }
+
+    // Get the global high score (highest score across all users)
+    public void getGlobalHighScore(ScoreCallback callback) {
+        Log.d(TAG, "getGlobalHighScore called");
+        if (myRef == null) {
+            callback.onResult(0, new Exception("Database reference not initialized"));
+            return;
+        }
+        
+        try {
+            Log.d(TAG, "Creating query to get global high score");
+            myRef.orderByChild("score").limitToLast(1).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    Log.d(TAG, "onDataChange for getGlobalHighScore, results count: " + dataSnapshot.getChildrenCount());
+                    int highScore = 0;
+                    
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        User user = snapshot.getValue(User.class);
+                        if (user != null) {
+                            highScore = user.score;
+                            Log.d(TAG, "Found global high score: " + highScore);
+                            break;
+                        }
+                    }
+                    
+                    Log.d(TAG, "Calling callback.onResult with global highScore=" + highScore);
+                    callback.onResult(highScore, null);
+                }
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    Log.e(TAG, "onCancelled for getGlobalHighScore: " + databaseError.getMessage());
+                    callback.onResult(0, databaseError.toException());
+                }
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "Exception in getGlobalHighScore: " + e.getMessage());
+            callback.onResult(0, e);
+        }
+    }
+
+    // Update high score for a user
+    public void updateUserHighScore(String username, int newScore, ScoreCallback callback) {
+        Log.d(TAG, "updateUserHighScore called for username: " + username + " with score: " + newScore);
+        if (myRef == null) {
+            callback.onResult(0, new Exception("Database reference not initialized"));
+            return;
+        }
+        
+        try {
+            Log.d(TAG, "Creating query to update user's high score");
+            myRef.orderByChild("userName").equalTo(username).addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    Log.d(TAG, "onDataChange for updateUserHighScore, results count: " + dataSnapshot.getChildrenCount());
+                    
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        User user = snapshot.getValue(User.class);
+                        if (user != null && user.userName != null && user.userName.equals(username)) {
+                            // Only update if new score is higher
+                            if (newScore > user.score) {
+                                user.score = newScore;
+                                snapshot.getRef().child("score").setValue(newScore);
+                                Log.d(TAG, "Updated high score to " + newScore + " for user: " + username);
+                            } else {
+                                Log.d(TAG, "New score " + newScore + " not higher than existing score " + user.score);
+                            }
+                            callback.onResult(user.score, null);
+                            return;
+                        }
+                    }
+                    
+                    // User not found
+                    Log.w(TAG, "User " + username + " not found for score update");
+                    callback.onResult(0, new Exception("User not found"));
+                }
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    Log.e(TAG, "onCancelled for updateUserHighScore: " + databaseError.getMessage());
+                    callback.onResult(0, databaseError.toException());
+                }
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "Exception in updateUserHighScore: " + e.getMessage());
+            callback.onResult(0, e);
+        }
+    }
 }

@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color; // <<-- Make sure this is imported
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;     // <<-- Make sure this is imported
 import android.widget.CompoundButton;
@@ -19,6 +20,7 @@ public class settings extends AppCompatActivity { // Class name is 'settings' as
     private SharedPreferences sharedPreferencesMusic; // For music settings
     private static final String PREF_MUSIC = "pref_music";
     private static final String MUSIC_PREFS_NAME = "game_settings"; // SharedPreferences file for music
+    private String callingActivity;
 
     // Declare buttons for color selection
     private Button buttonColorGreen;
@@ -33,12 +35,14 @@ public class settings extends AppCompatActivity { // Class name is 'settings' as
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings); // Your XML layout file
 
+        // Get the name of the calling activity
+        callingActivity = getIntent().getStringExtra("CALLING_ACTIVITY");
+        Log.d("Settings", "Called from: " + callingActivity);
+
         ImageButton backButton = findViewById(R.id.backButton3);
         if (backButton != null) {
             backButton.setOnClickListener(v -> {
-                Intent intent = new Intent(settings.this, MainActivity.class);
-                startActivity(intent);
-                finish();
+                handleBackNavigation();
             });
         }
 
@@ -109,11 +113,23 @@ public class settings extends AppCompatActivity { // Class name is 'settings' as
         }
     }
 
+    private void handleBackNavigation() {
+        if ("MainActivity".equals(callingActivity)) {
+            // Go back to MainActivity 
+            Intent intent = new Intent(settings.this, MainActivity.class);
+            startActivity(intent);
+            finish();
+        } else {
+            // Go back to GameActivity or any other activity without finishing it
+            // This just finishes the settings activity and returns to previous activity
+            finish();
+        }
+    }
+
     @Override
     public void onBackPressed() {
-        // This is called when the system's back button is pressed.
-        // We want the same behavior as your custom backButton3: just finish the activity.
-        super.onBackPressed(); // This calls finish() by default.
+        // Use the same handling as the back button
+        handleBackNavigation();
     }
 
     @Override

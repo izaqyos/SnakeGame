@@ -16,8 +16,15 @@ public class GameActivity extends AppCompatActivity {
 
     private GameManager gameManager;
     private TextView scoreTextView;
+    private TextView usernameTextView;
+    private TextView personalHighScoreTextView;
+    private TextView globalHighScoreTextView;
     private FrameLayout gameSurfaceContainer;
     private Button restartButton; // This is a Button in your layout
+    private String currentUsername;
+    private int personalHighScore = 0;
+    private int globalHighScore = 0;
+    private MyFBDB myFBDB;
 
     // Launcher for SettingsActivity
     // This will handle starting 'settings.class' and getting a result/callback
@@ -37,9 +44,28 @@ public class GameActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game); // Use your game layout
 
+        // Initialize database
+        myFBDB = new MyFBDB();
+        
+        // Find views
         scoreTextView = findViewById(R.id.scoreTextView);
+        usernameTextView = findViewById(R.id.usernameTextView);
+        personalHighScoreTextView = findViewById(R.id.personalHighScoreTextView);
+        globalHighScoreTextView = findViewById(R.id.globalHighScoreTextView);
         gameSurfaceContainer = findViewById(R.id.gameSurfaceContainer);
         restartButton = findViewById(R.id.restartButton); // Ensure this ID matches your Button in XML
+
+        // Get username from intent
+        currentUsername = getIntent().getStringExtra("USERNAME");
+        if (currentUsername != null && !currentUsername.isEmpty()) {
+            usernameTextView.setText(currentUsername);
+        } else {
+            currentUsername = "Player";
+            usernameTextView.setText(currentUsername);
+        }
+
+        // Load high scores
+        loadHighScores();
 
         // Pass 'this' (GameActivity context and the activity itself) to GameManager
         gameManager = new GameManager(this, this);
@@ -89,9 +115,9 @@ public class GameActivity extends AppCompatActivity {
         // Set listener for settings button
         if (settingsButton != null) {
             settingsButton.setOnClickListener(v -> {
-                Intent intent = new Intent(GameActivity.this, settings.class); // Assuming 'settings' is your SettingsActivity class name
-                settingsLauncher.launch(intent); // <<-- USE THE LAUNCHER HERE
-                // <<-- DO NOT call finish() on GameActivity
+                Intent intent = new Intent(GameActivity.this, settings.class);
+                intent.putExtra("CALLING_ACTIVITY", "GameActivity");
+                settingsLauncher.launch(intent); // This will handle the result properly
             });
         }
     }
@@ -124,11 +150,66 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
+    // Load high scores from Firebase
+    private void loadHighScores() {
+        // Get personal high score for current user
+        myFBDB.getUserHighScore(currentUsername, new MyFBDB.ScoreCallback() {
+            @Override
+            public void onResult(int score, Exception error) {
+                runOnUiThread(() -> {
+                    if (error == null) {
+                        personalHighScore = score;
+                        personalHighScoreTextView.setText("Best: " + personalHighScore);
+                    } else {
+                        Log.e("GameActivity", "Error loading personal high score: " + error.getMessage());
+                    }
+                });
+            }
+        });
+
+        // Get global high score
+        myFBDB.getGlobalHighScore(new MyFBDB.ScoreCallback() {
+            @Override
+            public void onResult(int score, Exception error) {
+                runOnUiThread(() -> {
+                    if (error == null) {
+                        globalHighScore = score;
+                        globalHighScoreTextView.setText("Top: " + globalHighScore);
+                    } else {
+                        Log.e("GameActivity", "Error loading global high score: " + error.getMessage());
+                    }
+                });
+            }
+        });
+    }
+
     // Method for GameManager to call to update the score TextView
     public void updateScore(int score) {
         runOnUiThread(() -> {
             if (scoreTextView != null) {
                 scoreTextView.setText("Score: " + score);
+            }
+            
+            // Update personal high score if current score is higher
+            if (score > personalHighScore) {
+                personalHighScore = score;
+                personalHighScoreTextView.setText("Best: " + personalHighScore);
+                
+                // Save new high score to Firebase
+                myFBDB.updateUserHighScore(currentUsername, score, new MyFBDB.ScoreCallback() {
+                    @Override
+                    public void onResult(int updatedScore, Exception error) {
+                        if (error != null) {
+                            Log.e("GameActivity", "Error updating high score: " + error.getMessage());
+                        }
+                    }
+                });
+                
+                // Check if this is also a global high score
+                if (score > globalHighScore) {
+                    globalHighScore = score;
+                    globalHighScoreTextView.setText("Top: " + globalHighScore);
+                }
             }
         });
     }
@@ -149,5 +230,35 @@ public class GameActivity extends AppCompatActivity {
                 restartButton.setVisibility(View.GONE);
             }
         });
+    }
+    
+    @Override
+    public void onBackPressed() {
+        // Prevent accidental game exit by using the same behavior as the back button
+        // Instead of automatically returning to login screen
+        if (gameManager != null && !gameManager.isGameOver()) {
+            // Show a dialog asking if the user really wants to exit the game in progress
+            androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
+            builder.setTitle("Exit Game")
+                   .setMessage("Are you sure you want to exit? Your progress will be lost.")
+                   .setPositiveButton("Yes", (dialog, which) -> {
+                       // If yes, proceed to MainActivity
+                       Intent intent = new Intent(GameActivity.this, MainActivity.class);
+                       intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                       startActivity(intent);
+                       finish();
+                   })
+                   .setNegativeButton("No", (dialog, which) -> {
+                       // If no, dismiss dialog and continue game
+                       dialog.dismiss();
+                   })
+                   .show();
+        } else {
+            // If game is over, just go back normally
+            Intent intent = new Intent(GameActivity.this, MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            finish();
+        }
     }
 }

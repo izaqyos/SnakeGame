@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="@drawable/main_back" tools:context=".HighScoresActivity">
+
+    <TextView
+        android:id="@+id/HighScoresTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Scores Record"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:textColor="#ba1160"
+        android:layout_marginTop="8dp" android:layout_marginBottom="16dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewHighScores"
+        android:layout_width="376dp"
+        android:layout_height="509dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"
+        android:background="@color/specific_pink"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintBottom_toTopOf="@+id/backToGame"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/HighScoresTitle"
+        tools:listitem="@layout/item_score" />
+
+    <TextView
+        android:id="@+id/tvNoScores"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="No high scores yet!"
+        android:textSize="18sp"
+        android:textColor="@android:color/darker_gray"
+        android:visibility="gone" app:layout_constraintTop_toTopOf="@+id/recyclerViewHighScores"
+        app:layout_constraintBottom_toBottomOf="@+id/recyclerViewHighScores"
+        app:layout_constraintStart_toStartOf="@+id/recyclerViewHighScores"
+        app:layout_constraintEnd_toEndOf="@+id/recyclerViewHighScores" />
+
+    <ImageButton
+        android:id="@+id/backToGame"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="5dp"
+        android:layout_marginBottom="8dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Back"
+        android:padding="8dp"
+        android:src="@android:drawable/ic_media_previous"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <ImageButton
+        android:id="@+id/settingsButton"
+        android:layout_width="55dp"
+        android:layout_height="54dp"
+        android:layout_marginEnd="4dp"
+        android:layout_marginBottom="2dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/settings" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

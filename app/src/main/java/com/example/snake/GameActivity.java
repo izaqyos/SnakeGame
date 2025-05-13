@@ -1,18 +1,23 @@
 package com.example.snake;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.widget.ImageButton;
 import android.widget.FrameLayout;
 import android.widget.TextView;
-import androidx.activity.result.ActivityResultLauncher; // <<-- IMPORT THIS
-import androidx.activity.result.contract.ActivityResultContracts; // <<-- IMPORT THIS
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
-import android.util.Log; // For logging
+import android.util.Log; // ודאי שהייבוא הזה קיים
 import android.view.View;
-import android.widget.Button; // You're using Button for restartButton
+import android.widget.Button;
 
 public class GameActivity extends AppCompatActivity {
+
+    private static final String UI_TAG = "GameActivity_UI"; // תג ללוגים של UI
+    private static final String UI_INIT_TAG = "GameActivity_UI_Init"; // תג ללוגים של אתחול UI
 
     private GameManager gameManager;
     private TextView scoreTextView;
@@ -20,21 +25,16 @@ public class GameActivity extends AppCompatActivity {
     private TextView personalHighScoreTextView;
     private TextView globalHighScoreTextView;
     private FrameLayout gameSurfaceContainer;
-    private Button restartButton; // This is a Button in your layout
+    private Button restartButton;
+    private Button highScoresButton;
     private String currentUsername;
     private int personalHighScore = 0;
-    private int globalHighScore = 0;
     private MyFBDB myFBDB;
 
-    // Launcher for SettingsActivity
-    // This will handle starting 'settings.class' and getting a result/callback
     private final ActivityResultLauncher<Intent> settingsLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-                // This block is executed when 'settings.class' (your SettingsActivity) finishes
-                // and returns to GameActivity.
-                Log.d("GameActivity", "Returned from settings.class");
+                Log.d("GameActivity", "חזרה ממסך ההגדרות (settings.class)");
                 if (gameManager != null) {
-                    // Tell GameManager to reload the color preference and update its paint object
                     gameManager.refreshAppearance();
                 }
             });
@@ -42,82 +42,92 @@ public class GameActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_game); // Use your game layout
+        setContentView(R.layout.activity_game);
 
-        // Initialize database
         myFBDB = new MyFBDB();
-        
-        // Find views
+
         scoreTextView = findViewById(R.id.scoreTextView);
         usernameTextView = findViewById(R.id.usernameTextView);
         personalHighScoreTextView = findViewById(R.id.personalHighScoreTextView);
         globalHighScoreTextView = findViewById(R.id.globalHighScoreTextView);
         gameSurfaceContainer = findViewById(R.id.gameSurfaceContainer);
-        restartButton = findViewById(R.id.restartButton); // Ensure this ID matches your Button in XML
+        restartButton = findViewById(R.id.restartButton);
+        highScoresButton = findViewById(R.id.highScoresButton);
 
-        // Get username from intent
-        currentUsername = getIntent().getStringExtra("USERNAME");
-        if (currentUsername != null && !currentUsername.isEmpty()) {
-            usernameTextView.setText(currentUsername);
+        // בדיקה אם הכפתורים נמצאו
+        if (restartButton == null) {
+            Log.e(UI_INIT_TAG, "restartButton is NULL after findViewById. Check R.id.restartButton in XML.");
         } else {
-            currentUsername = "Player";
-            usernameTextView.setText(currentUsername);
+            Log.d(UI_INIT_TAG, "restartButton found successfully.");
+        }
+        if (highScoresButton == null) {
+            Log.e(UI_INIT_TAG, "highScoresButton is NULL after findViewById. Check R.id.button_high_scores in XML.");
+        } else {
+            Log.d(UI_INIT_TAG, "highScoresButton found successfully.");
         }
 
-        // Load high scores
+
+        currentUsername = getIntent().getStringExtra("USERNAME");
+        if (currentUsername != null && !currentUsername.isEmpty()) {
+            if (usernameTextView != null) {
+                usernameTextView.setText(currentUsername);
+            }
+        } else {
+            currentUsername = "Player";
+            if (usernameTextView != null) {
+                usernameTextView.setText(currentUsername);
+            }
+            Log.w("GameActivity", "Username not passed via Intent, using default 'Player'");
+        }
+
         loadHighScores();
 
-        // Pass 'this' (GameActivity context and the activity itself) to GameManager
-        gameManager = new GameManager(this, this);
+        gameManager = new GameManager(this, this, currentUsername, myFBDB);
         if (gameSurfaceContainer != null) {
             gameSurfaceContainer.addView(gameManager);
         } else {
             Log.e("GameActivity", "gameSurfaceContainer is null! Cannot add GameManager.");
-            // Consider finishing the activity or showing an error if container is vital
-            finish(); // Example: finish if the container is not found
+            finish();
             return;
         }
 
-        // Find buttons as ImageButtons
         ImageButton buttonUp = findViewById(R.id.buttonUp);
         ImageButton buttonDown = findViewById(R.id.buttonDown);
         ImageButton buttonLeft = findViewById(R.id.buttonLeft);
         ImageButton buttonRight = findViewById(R.id.buttonRight);
         ImageButton backButton = findViewById(R.id.backButton);
-        ImageButton settingsButton = findViewById(R.id.buttonSettings2); // Your settings button
+        ImageButton settingsButton = findViewById(R.id.buttonSettings2);
 
-        // Set listeners using GameManager.Direction
         if (buttonUp != null) buttonUp.setOnClickListener(v -> gameManager.setDirection(GameManager.Direction.UP));
         if (buttonDown != null) buttonDown.setOnClickListener(v -> gameManager.setDirection(GameManager.Direction.DOWN));
         if (buttonLeft != null) buttonLeft.setOnClickListener(v -> gameManager.setDirection(GameManager.Direction.LEFT));
         if (buttonRight != null) buttonRight.setOnClickListener(v -> gameManager.setDirection(GameManager.Direction.RIGHT));
 
-        // Set listener for back button
         if (backButton != null) {
-            backButton.setOnClickListener(v -> {
-                Intent intent = new Intent(GameActivity.this, MainActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-                finish(); // Finish GameActivity when going back to MainActivity
-            });
+            backButton.setOnClickListener(v -> navigateToMainActivity());
         }
 
-        // Set listener for restart button
         if (restartButton != null) {
             restartButton.setOnClickListener(v -> {
+                Log.d(UI_TAG, "Restart button clicked."); // לוג לחיצה
                 if (gameManager != null) {
                     gameManager.restartGame();
                 }
-                hideRestartButton(); // Hide after clicking
+                hideGameOverUI();
             });
         }
 
-        // Set listener for settings button
+        if (highScoresButton!= null) {
+            highScoresButton.setOnClickListener(v -> {
+                Intent intent = new Intent(GameActivity.this, HighScoresActivity.class);
+                settingsLauncher.launch(intent);
+            });
+        }
+
         if (settingsButton != null) {
             settingsButton.setOnClickListener(v -> {
                 Intent intent = new Intent(GameActivity.this, settings.class);
-                intent.putExtra("CALLING_ACTIVITY", "GameActivity");
-                settingsLauncher.launch(intent); // This will handle the result properly
+                settingsLauncher.launch(intent);
             });
         }
     }
@@ -127,17 +137,16 @@ public class GameActivity extends AppCompatActivity {
         super.onResume();
         Log.d("GameActivity", "onResume called");
         if (gameManager != null) {
-            gameManager.resume(); // Resume game logic in GameManager
-
-            // Update UI based on game state from GameManager
-            if (gameManager.isGameOver()) { // <<-- USE THE GETTER
-                showRestartButton();
+            gameManager.resume();
+            Log.d(UI_TAG, "onResume - isGameOver: " + gameManager.isGameOver()); // לוג לבדיקת מצב המשחק
+            if (gameManager.isGameOver()) {
+                showGameOverUI();
             } else {
-                hideRestartButton();
+                hideGameOverUI();
             }
-            // Optional: Refresh appearance here too, as a general refresh point.
-            // The launcher callback is more specific for immediate return from settings.
-            // gameManager.refreshAppearance();
+            loadHighScores();
+        } else {
+            Log.w(UI_TAG, "onResume - gameManager is NULL");
         }
     }
 
@@ -146,119 +155,120 @@ public class GameActivity extends AppCompatActivity {
         super.onPause();
         Log.d("GameActivity", "onPause called");
         if (gameManager != null) {
-            gameManager.pause(); // Pause game logic in GameManager
+            gameManager.pause();
         }
     }
 
-    // Load high scores from Firebase
     private void loadHighScores() {
-        // Get personal high score for current user
+        if (myFBDB == null || currentUsername == null) {
+            Log.e(UI_TAG, "Cannot load high scores: myFBDB or currentUsername is null.");
+            if(personalHighScoreTextView!=null) personalHighScoreTextView.setText("Best: N/A");
+            if(globalHighScoreTextView!=null) globalHighScoreTextView.setText("Top: N/A");
+            return;
+        }
+
         myFBDB.getUserHighScore(currentUsername, new MyFBDB.ScoreCallback() {
             @Override
             public void onResult(int score, Exception error) {
                 runOnUiThread(() -> {
                     if (error == null) {
                         personalHighScore = score;
-                        personalHighScoreTextView.setText("Best: " + personalHighScore);
+                        if (personalHighScoreTextView != null) {
+                            personalHighScoreTextView.setText("Best: " + personalHighScore);
+                        }
                     } else {
-                        Log.e("GameActivity", "Error loading personal high score: " + error.getMessage());
+                        Log.e(UI_TAG, "Error loading personal high score for " + currentUsername + ": " + error.getMessage());
+                        if (personalHighScoreTextView != null) personalHighScoreTextView.setText("Best: Error");
                     }
                 });
             }
         });
 
-        // Get global high score
         myFBDB.getGlobalHighScore(new MyFBDB.ScoreCallback() {
             @Override
             public void onResult(int score, Exception error) {
                 runOnUiThread(() -> {
                     if (error == null) {
-                        globalHighScore = score;
-                        globalHighScoreTextView.setText("Top: " + globalHighScore);
+                        if (globalHighScoreTextView != null) {
+                            globalHighScoreTextView.setText("Top: " + score);
+                        }
                     } else {
-                        Log.e("GameActivity", "Error loading global high score: " + error.getMessage());
+                        Log.e(UI_TAG, "Error loading global high score: " + error.getMessage());
+                        if (globalHighScoreTextView != null) globalHighScoreTextView.setText("Top: Error");
                     }
                 });
             }
         });
     }
 
-    // Method for GameManager to call to update the score TextView
-    public void updateScore(int score) {
+    public void updateScore(int currentScore) {
         runOnUiThread(() -> {
             if (scoreTextView != null) {
-                scoreTextView.setText("Score: " + score);
+                scoreTextView.setText("Score: " + currentScore);
             }
-            
-            // Update personal high score if current score is higher
-            if (score > personalHighScore) {
-                personalHighScore = score;
-                personalHighScoreTextView.setText("Best: " + personalHighScore);
-                
-                // Save new high score to Firebase
-                myFBDB.updateUserHighScore(currentUsername, score, new MyFBDB.ScoreCallback() {
-                    @Override
-                    public void onResult(int updatedScore, Exception error) {
-                        if (error != null) {
-                            Log.e("GameActivity", "Error updating high score: " + error.getMessage());
-                        }
-                    }
-                });
-                
-                // Check if this is also a global high score
-                if (score > globalHighScore) {
-                    globalHighScore = score;
-                    globalHighScoreTextView.setText("Top: " + globalHighScore);
+            if (currentScore > personalHighScore) {
+                if (personalHighScoreTextView != null) {
+                    personalHighScoreTextView.setText("Best: " + currentScore);
                 }
             }
         });
     }
 
-    // Method for GameManager to call to show the restart button
-    public void showRestartButton() {
+    public void showGameOverUI() {
+        Log.d(UI_TAG, "showGameOverUI called"); // לוג שהמתודה נקראה
         runOnUiThread(() -> {
             if (restartButton != null) {
+                Log.d(UI_TAG, "Showing restartButton");
                 restartButton.setVisibility(View.VISIBLE);
+            } else {
+                Log.e(UI_TAG, "restartButton is NULL in showGameOverUI");
+            }
+            if (highScoresButton != null) {
+                Log.d(UI_TAG, "Showing highScoresButton");
+                highScoresButton.setVisibility(View.VISIBLE);
+            } else {
+                Log.e(UI_TAG, "highScoresButton is NULL in showGameOverUI");
+            }
+            loadHighScores(); // רענון השיאים בסיום משחק
+        });
+    }
+
+    private void hideGameOverUI() {
+        Log.d(UI_TAG, "hideGameOverUI called"); // לוג שהמתודה נקראה
+        runOnUiThread(() -> {
+            if (restartButton != null) {
+                Log.d(UI_TAG, "Hiding restartButton");
+                restartButton.setVisibility(View.GONE);
+            } else {
+                Log.e(UI_TAG, "restartButton is NULL in hideGameOverUI");
+            }
+            if (highScoresButton != null) {
+                Log.d(UI_TAG, "Hiding highScoresButton");
+                highScoresButton.setVisibility(View.GONE);
+            } else {
+                Log.e(UI_TAG, "highScoresButton is NULL in hideGameOverUI");
             }
         });
     }
 
-    // Method to hide the restart button
-    private void hideRestartButton() {
-        runOnUiThread(() -> {
-            if (restartButton != null) {
-                restartButton.setVisibility(View.GONE);
-            }
-        });
+    private void navigateToMainActivity() {
+        Intent intent = new Intent(GameActivity.this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish();
     }
-    
+
     @Override
     public void onBackPressed() {
-        // Prevent accidental game exit by using the same behavior as the back button
-        // Instead of automatically returning to login screen
         if (gameManager != null && !gameManager.isGameOver()) {
-            // Show a dialog asking if the user really wants to exit the game in progress
-            androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
-            builder.setTitle("Exit Game")
-                   .setMessage("Are you sure you want to exit? Your progress will be lost.")
-                   .setPositiveButton("Yes", (dialog, which) -> {
-                       // If yes, proceed to MainActivity
-                       Intent intent = new Intent(GameActivity.this, MainActivity.class);
-                       intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                       startActivity(intent);
-                       finish();
-                   })
-                   .setNegativeButton("No", (dialog, which) -> {
-                       // If no, dismiss dialog and continue game
-                       dialog.dismiss();
-                   })
-                   .show();
+            new AlertDialog.Builder(this)
+                    .setTitle("יציאה מהמשחק")
+                    .setMessage("האם ברצונך לצאת? ההתקדמות תאבד.")
+                    .setPositiveButton("כן", (dialog, which) -> navigateToMainActivity())
+                    .setNegativeButton("לא", (dialog, which) -> dialog.dismiss())
+                    .show();
         } else {
-            // If game is over, just go back normally
-            Intent intent = new Intent(GameActivity.this, MainActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
-            finish();
+            navigateToMainActivity();
         }
     }
 }

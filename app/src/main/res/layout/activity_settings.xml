@@ -38,13 +38,16 @@
     android:textSize="18sp" android:layout_marginStart="32dp"
     android:layout_marginTop="32dp"
     app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toBottomOf="@+id/musicSettingsLayout" /> <TextView
+    app:layout_constraintTop_toBottomOf="@+id/musicSettingsLayout" />
+
+    <TextView
     android:id="@+id/textView_snake_color_label"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:text="Select Snake Color:"
     android:textSize="18sp"
-    android:textColor="@android:color/black" android:layout_marginTop="32dp"
+    android:textColor="#ba1160"
+    android:layout_marginTop="32dp"
     app:layout_constraintTop_toBottomOf="@+id/musicSwitch"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintEnd_toEndOf="parent" />
@@ -88,6 +91,7 @@
             android:text="Blue Snake"
             app:backgroundTint="#2196F3" />
 
+
         <Button
             android:id="@+id/button_color_yellow"
             style="@style/Widget.AppCompat.Button.Colored"
@@ -107,6 +111,7 @@
             android:layout_marginBottom="4dp"
             android:text="White Snake"
             android:textColor="@android:color/black" app:backgroundTint="#FFFFFF" />
+
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

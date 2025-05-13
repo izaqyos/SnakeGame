@@ -12,10 +12,10 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:src="@android:drawable/ic_media_previous"
+        android:layout_marginTop="4dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="Back"
+        android:src="@android:drawable/ic_media_previous"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -102,81 +102,95 @@
         app:layout_constraintBottom_toTopOf="@+id/controlsLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/statsLayout">
-        <!-- GameManager (SurfaceView) will be added here programmatically -->
-    </FrameLayout>
+        app:layout_constraintTop_toBottomOf="@+id/statsLayout"
+        app:layout_constraintVertical_bias="0.947"></FrameLayout>
 
     <Button
+
         android:id="@+id/restartButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Restart"
         android:textColor="#ba1160"
         android:background="@drawable/pink_button"
-        android:visibility="gone" 
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="@+id/gameSurfaceContainer"
         app:layout_constraintEnd_toEndOf="@+id/gameSurfaceContainer"
         app:layout_constraintStart_toStartOf="@+id/gameSurfaceContainer"
         app:layout_constraintTop_toTopOf="@+id/gameSurfaceContainer"
         app:layout_constraintVertical_bias="0.65" />
 
+
+
+    <Button
+    android:id="@+id/highScoresButton"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="best score"
+    android:textColor="#ba1160"
+    android:background="@drawable/pink_button"
+    android:layout_marginTop="16dp"
+    android:visibility="gone"
+    app:layout_constraintTop_toBottomOf="@+id/restartButton"
+    app:layout_constraintStart_toStartOf="@+id/restartButton"
+    app:layout_constraintEnd_toEndOf="@+id/restartButton"
+        app:layout_constraintVertical_bias="0.75"/>
+
     <LinearLayout
-        android:id="@+id/controlsLayout"
+    android:id="@+id/controlsLayout"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="16dp"
+    android:gravity="center"
+    android:orientation="vertical"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent">
+
+    <ImageButton
+        android:id="@+id/buttonUp"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:src="@android:drawable/ic_media_play"
+        android:rotation="-90"
+        android:scaleType="fitCenter"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Up" />
+
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:gravity="center"
-        android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        android:orientation="horizontal">
 
         <ImageButton
-            android:id="@+id/buttonUp"
+            android:id="@+id/buttonLeft"
             android:layout_width="72dp"
             android:layout_height="72dp"
-            android:src="@android:drawable/ic_media_play"
-            android:rotation="-90"
+            android:layout_marginEnd="48dp"
+            android:src="@android:drawable/ic_media_previous"
             android:scaleType="fitCenter"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Up" />
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <ImageButton
-                android:id="@+id/buttonLeft"
-                android:layout_width="72dp"
-                android:layout_height="72dp"
-                android:layout_marginEnd="48dp"
-                android:src="@android:drawable/ic_media_previous"
-                android:scaleType="fitCenter"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Left" />
-
-            <ImageButton
-                android:id="@+id/buttonRight"
-                android:layout_width="72dp"
-                android:layout_height="72dp"
-                android:layout_marginStart="48dp"
-                android:src="@android:drawable/ic_media_next"
-                android:scaleType="fitCenter"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Right" />
-        </LinearLayout>
+            android:contentDescription="Left" />
 
         <ImageButton
-            android:id="@+id/buttonDown"
+            android:id="@+id/buttonRight"
             android:layout_width="72dp"
             android:layout_height="72dp"
-            android:src="@android:drawable/ic_media_play"
-            android:rotation="90"
+            android:layout_marginStart="48dp"
+            android:src="@android:drawable/ic_media_next"
             android:scaleType="fitCenter"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Down" />
-
+            android:contentDescription="Right" />
     </LinearLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout> 
+    <ImageButton
+        android:id="@+id/buttonDown"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:src="@android:drawable/ic_media_play"
+        android:rotation="90"
+        android:scaleType="fitCenter"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Down" />
+</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -28,6 +28,8 @@
             android:name=".GameActivity"
             android:exported="false" />
         <activity
+            android:name=".HighScoresActivity"  android:exported="false"/>
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

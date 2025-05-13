@@ -105,9 +105,9 @@
         android:background="@drawable/pink_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/registerButton"
-        />
+        app:layout_constraintTop_toBottomOf="@+id/registerButton" />
 
+    <!-- TextView for Displaying Welcome Text -->
     <TextView
         android:id="@+id/welcome"
         android:layout_width="334dp"
@@ -139,6 +139,19 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@drawable/settings" />
+
+    <Switch
+        android:id="@+id/saveUserSwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Save User Details"
+        android:textColor="#ba1160"
+        android:background="@color/white"
+        android:layout_marginTop="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent" />
+
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

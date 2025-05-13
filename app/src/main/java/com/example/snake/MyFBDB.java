@@ -63,7 +63,7 @@ public class MyFBDB {
             Log.d(TAG, "FirebaseDatabase instance obtained.");
             myRef = database.getReference("Users");
             Log.d(TAG, "Got DatabaseReference for /Users. Attaching ValueEventListener...");
-            
+
             // Test write to verify connection
             DatabaseReference testRef = database.getReference("connection_test");
             testRef.setValue("connected_at_" + System.currentTimeMillis())
@@ -109,7 +109,12 @@ public class MyFBDB {
         }
         Log.d(TAG, "MyFBDB constructor exit.");
     }
-
+    public List<User> getUsersArrayList() {
+        if (this.usersArrayList != null) {
+            return new ArrayList<>(this.usersArrayList); // Return a copy
+        }
+        return new ArrayList<>(); // Return an empty list if the source is null
+    }
     public void saveUser(User user){
         // Ensure myRef is initialized before using
         if (myRef == null) {

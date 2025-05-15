@@ -84,9 +84,7 @@ public class UserFileStorage {
                 user.setKey(userJson.optString("key", "user_" + i)); // Use optString
                 user.setUserName(userJson.optString("userName", null));
                 user.setPassword(userJson.optString("password", null));
-                user.setLevel(userJson.optInt("level", 0));
                 user.setScore(userJson.optInt("score", 0));
-                user.setCoins(userJson.optInt("coins", 0));
                  if (user.getUserName() == null || user.getPassword() == null) {
                     Log.e(TAG, "loadUsersFromFile: Loaded user with null username/password at index " + i + ", skipping.");
                     continue;
@@ -123,9 +121,7 @@ public class UserFileStorage {
                 userJson.put("key", user.getKey());
                 userJson.put("userName", user.getUserName());
                 userJson.put("password", user.getPassword());
-                userJson.put("level", user.getLevel());
                 userJson.put("score", user.getScore());
-                userJson.put("coins", user.getCoins());
                 jsonArray.put(userJson);
             } catch (JSONException e) {
                 Log.e(TAG, "saveUsersToFile: Error creating JSON for user: " + user.getUserName(), e);

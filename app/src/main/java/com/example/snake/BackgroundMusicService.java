@@ -1,28 +1,24 @@
-package com.example.snake; // Replace with your package name
+package com.example.snake;
 
 import android.app.Service;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.IBinder;
 import android.util.Log;
-
 import androidx.annotation.Nullable;
 
 public class BackgroundMusicService extends Service {
     private MediaPlayer mediaPlayer;
     private static boolean isPlaying = false;
-    private float currentVolume = 1.0f; // Default volume
-
+    private float currentVolume = 2.0f; // Default volume
     public static boolean isPlaying() {
         return isPlaying;
     }
-
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return null;
     }
-
     @Override
     public void onCreate() {
         super.onCreate();
@@ -31,7 +27,6 @@ public class BackgroundMusicService extends Service {
         setVolume(currentVolume); // Apply initial volume
         Log.d("MusicService", "onCreate");
     }
-
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d("MusicService", "onStartCommand");
@@ -47,13 +42,11 @@ public class BackgroundMusicService extends Service {
         }
         return START_STICKY;
     }
-
     private void setVolume(float volume) {
         if (mediaPlayer != null) {
             mediaPlayer.setVolume(volume, volume);
         }
     }
-
     @Override
     public void onDestroy() {
         super.onDestroy();

@@ -21,7 +21,6 @@ import java.util.List;
 public class HighScoresActivity extends AppCompatActivity {
 
     private static final String TAG = "HighScoresActivity";
-    // Define SharedPreferences constants - ensure these are IDENTICAL in MainActivity
     private static final String AUTH_PREFS_NAME = "SnakeAuthPrefs";
     private static final String KEY_LAST_USERNAME = "last_username";
 
@@ -42,13 +41,11 @@ public class HighScoresActivity extends AppCompatActivity {
 
         Log.d(TAG, "onCreate: Activity created.");
 
-        // Get current username from the Intent that started this Activity
         currentUsername = getIntent().getStringExtra("USERNAME");
         if (currentUsername != null && !currentUsername.isEmpty()) {
-            Log.i(TAG, "Username received from Intent: " + currentUsername);
+            Log.i(TAG, "Username received from Intent: '" + currentUsername + "'");
         } else {
-            Log.w(TAG, "No USERNAME passed in Intent to HighScoresActivity. Cannot save last username if it's unknown.");
-            // currentUsername will be null or empty, affecting save logic
+            Log.w(TAG, "No USERNAME passed in Intent to HighScoresActivity. currentUsername is: '" + currentUsername + "'");
         }
 
         TextView titleTextView = findViewById(R.id.HighScoresTitle);
@@ -60,31 +57,29 @@ public class HighScoresActivity extends AppCompatActivity {
 
         recyclerViewHighScores = findViewById(R.id.recyclerViewHighScores);
         tvNoScores = findViewById(R.id.tvNoScores);
-        ImageButton buttonBack = findViewById(R.id.backToGame); // ID from your activity_high_scores.xml
+        ImageButton buttonBack = findViewById(R.id.backToGame);
 
         if (buttonBack != null) {
             buttonBack.setOnClickListener(v -> {
-                // Save the current username to SharedPreferences
+                Log.d(TAG, "Back button clicked. Attempting to save username and navigate to MainActivity.");
                 if (currentUsername != null && !currentUsername.isEmpty()) {
                     Log.i(TAG, "Attempting to save username: '" + currentUsername + "' to SharedPreferences.");
                     SharedPreferences prefs = getSharedPreferences(AUTH_PREFS_NAME, MODE_PRIVATE);
                     SharedPreferences.Editor editor = prefs.edit();
                     editor.putString(KEY_LAST_USERNAME, currentUsername);
-                    boolean commitSuccessful = editor.commit(); // Using commit() for immediate result for debugging
+                    boolean commitSuccessful = editor.commit();
                     if (commitSuccessful) {
                         Log.i(TAG, "Successfully saved last username: '" + currentUsername + "' using SharedPreferences name: '" + AUTH_PREFS_NAME + "' and key: '" + KEY_LAST_USERNAME + "'.");
                     } else {
                         Log.e(TAG, "Failed to save username to SharedPreferences!");
                     }
                 } else {
-                    Log.w(TAG, "Current username is null or empty. Not saving to SharedPreferences.");
+                    Log.w(TAG, "Current username is null or empty when back button clicked. Not saving to SharedPreferences.");
                 }
-
-                // Intent to go back to MainActivity
                 Intent intent = new Intent(HighScoresActivity.this, MainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
-                finish(); // Close HighScoresActivity
+                finish();
             });
         } else {
             Log.e(TAG, "Back button (backToGame) is null. Check ID R.id.backToGame in XML.");
@@ -93,33 +88,24 @@ public class HighScoresActivity extends AppCompatActivity {
         if (recyclerViewHighScores != null) {
             recyclerViewHighScores.setLayoutManager(new LinearLayoutManager(this));
             userScoreList = new ArrayList<>();
-            // Pass currentUsername to adapter for potential highlighting
-            scoreAdapter = new ScoreAdapter(userScoreList, currentUsername);
+
+            // --- ADDING EXTRA LOG BEFORE ADAPTER CREATION ---
+            Log.d(TAG, "Just before creating ScoreAdapter, this.currentUsername is: '" + this.currentUsername + "'");
+            // -------------------------------------------------
+
+            scoreAdapter = new ScoreAdapter(userScoreList, this.currentUsername); // Explicitly use this.currentUsername
             recyclerViewHighScores.setAdapter(scoreAdapter);
         } else {
             Log.e(TAG, "recyclerViewHighScores is null. Check ID in XML.");
         }
 
         loadFirebaseHighScores();
-
-        ImageButton settingsButton = findViewById(R.id.settingsButton);
-        if (settingsButton != null) {
-            settingsButton.setOnClickListener(v -> {
-                Intent intent = new Intent(HighScoresActivity.this, settings.class);
-                startActivity(intent);
-                finish();
-            });
-        }
     }
 
     private void loadFirebaseHighScores() {
         Log.d(TAG, "loadFirebaseHighScores: Attempting to fetch scores from Firebase...");
-        if (tvNoScores != null) {
-            tvNoScores.setVisibility(View.GONE);
-        }
-        if (recyclerViewHighScores != null) {
-            recyclerViewHighScores.setVisibility(View.VISIBLE);
-        }
+        if (tvNoScores != null) tvNoScores.setVisibility(View.GONE);
+        if (recyclerViewHighScores != null) recyclerViewHighScores.setVisibility(View.VISIBLE);
 
         if (myFBDB == null) {
             Log.e(TAG, "MyFBDB instance is null! Cannot load scores.");
@@ -136,39 +122,31 @@ public class HighScoresActivity extends AppCompatActivity {
             public void onDataLoaded() {
                 Log.d(TAG, "Firebase data loaded via listener in HighScoresActivity.");
                 List<User> fetchedUsers = myFBDB.getUsersArrayList();
-
                 if (fetchedUsers == null) {
                     Log.e(TAG, "myFBDB.getUsersArrayList() returned null after data load!");
                     handleNoScores("Data structure error from DB.");
                     return;
                 }
                 List<User> allUsers = new ArrayList<>(fetchedUsers);
-
                 if (allUsers.isEmpty()) {
-                    Log.d(TAG, "No users found in Firebase data.");
                     handleNoScores("No high scores yet!");
                 } else {
                     Collections.sort(allUsers, (u1, u2) -> Integer.compare(u2.getScore(), u1.getScore()));
                     userScoreList.clear();
                     userScoreList.addAll(allUsers);
-                    if (scoreAdapter != null) {
-                        scoreAdapter.notifyDataSetChanged();
-                    }
+                    if (scoreAdapter != null) scoreAdapter.notifyDataSetChanged();
                     if (tvNoScores != null) tvNoScores.setVisibility(View.GONE);
                     if (recyclerViewHighScores != null) recyclerViewHighScores.setVisibility(View.VISIBLE);
                     Log.d(TAG, "Displaying " + allUsers.size() + " scores.");
                 }
             }
-
             @Override
             public void onDataLoadError(DatabaseError error) {
                 Log.e(TAG, "Firebase data load error: " + error.getMessage());
                 handleNoScores("Failed to load scores: " + error.toException().getMessage());
             }
         };
-
         myFBDB.addDataLoadListener(fbDataListener);
-
         List<User> initialUsers = myFBDB.getUsersArrayList();
         if (initialUsers != null && !initialUsers.isEmpty() && (scoreAdapter != null && scoreAdapter.getItemCount() == 0) ) {
             Log.d(TAG, "Initial data already present in MyFBDB, processing now.");
@@ -185,13 +163,10 @@ public class HighScoresActivity extends AppCompatActivity {
             tvNoScores.setText(message);
             tvNoScores.setVisibility(View.VISIBLE);
         }
-        if (recyclerViewHighScores != null) {
-            recyclerViewHighScores.setVisibility(View.GONE);
-        }
+        if (recyclerViewHighScores != null) recyclerViewHighScores.setVisibility(View.GONE);
         if (userScoreList != null) userScoreList.clear();
         if (scoreAdapter != null) scoreAdapter.notifyDataSetChanged();
     }
-
 
     @Override
     protected void onResume() {

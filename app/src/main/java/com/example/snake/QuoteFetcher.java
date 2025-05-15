@@ -41,9 +41,8 @@ public class QuoteFetcher {
                 connection = (HttpURLConnection) url.openConnection();
 
                 connection.setRequestMethod("GET");
-                connection.setConnectTimeout(15000); // Increased timeout slightly
-                connection.setReadTimeout(15000);    // Increased timeout slightly
-                // Zen Quotes doesn't strictly require an Accept header for basic use, but it's good practice
+                connection.setConnectTimeout(15000);
+                connection.setReadTimeout(15000);
                 connection.setRequestProperty("Accept", "application/json");
 
                 int statusCode = connection.getResponseCode();
@@ -73,23 +72,17 @@ public class QuoteFetcher {
 
                 } else {
                     String errorMsg = "Failed to fetch quote. HTTP Status: " + statusCode;
-                    Log.e(TAG, errorMsg);
-                    // Attempt to read error stream for more details
                     try (BufferedReader errorReader = new BufferedReader(new InputStreamReader(connection.getErrorStream()))) {
                         String errorLine;
                         StringBuilder errorResponse = new StringBuilder();
                         while ((errorLine = errorReader.readLine()) != null) {
                             errorResponse.append(errorLine);
                         }
-                        Log.e(TAG, "Error response body: " + errorResponse.toString());
-                    } catch (Exception ex) {
-                        Log.e(TAG, "Failed to read error stream", ex);
                     }
                     mainThreadHandler.post(() -> callback.onFetchFailed(errorMsg + " - Check Logcat for API error response."));
                 }
             } catch (Exception e) {
                 String errorMsg = "Error fetching/parsing quote: " + e.getMessage();
-                Log.e(TAG, errorMsg, e);
                 mainThreadHandler.post(() -> callback.onFetchFailed(errorMsg));
             } finally {
                 if (reader != null) {

@@ -31,32 +31,6 @@ public class settings extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        sharedPreferences = getSharedPreferences(SETTINGS_PREFS_NAME, MODE_PRIVATE);
-        difficultyRadioGroup = findViewById(R.id.radioGroupDifficulty);
-
-        // שליפת רמת הקושי שנשמרה
-        int savedDifficulty = sharedPreferences.getInt(PREF_DIFFICULTY, 0); // ברירת מחדל 0 (קל)
-        if (savedDifficulty == 0) {
-            difficultyRadioGroup.check(R.id.radioEasy);
-        } else if (savedDifficulty == 1) {
-            difficultyRadioGroup.check(R.id.radioMedium);
-        } else {
-            difficultyRadioGroup.check(R.id.radioHard);
-        }
-
-        difficultyRadioGroup.setOnCheckedChangeListener((group, checkedId) -> {
-            int difficultyLevel = 0;
-            if (checkedId == R.id.radioMedium) {
-                difficultyLevel = 1; // בינוני
-            } else if (checkedId == R.id.radioHard) {
-                difficultyLevel = 2; // קשה
-            }
-            // שמירה ב-SharedPreferences
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putInt(PREF_DIFFICULTY, difficultyLevel);
-            editor.apply();
-        });
-
         // כפתור חזרה למסך הראשי
         ImageButton backButton = findViewById(R.id.backButton3);
         if (backButton != null) {

@@ -7,9 +7,8 @@ public class User {
     public String key;
     public String userName;
     public String password;
-    public int level;
     public int score;
-    public int coins;
+
 
     public User() {
         // Default constructor required for Firebase
@@ -18,9 +17,7 @@ public class User {
     public User(String userName, String password, int level, int score, int coins) {
         this.userName = userName;
         this.password = password;
-        this.level = level;
         this.score = score;
-        this.coins = coins;
     }
 
     public String getKey() {
@@ -47,14 +44,6 @@ public class User {
         this.password = password;
     }
 
-    public int getLevel() {
-        return level;
-    }
-
-    public void setLevel(int level) {
-        this.level = level;
-    }
-
     public int getScore() {
         return score;
     }
@@ -63,22 +52,12 @@ public class User {
         this.score = score;
     }
 
-    public int getCoins() {
-        return coins;
-    }
-
-    public void setCoins(int coins) {
-        this.coins = coins;
-    }
-
     @Override
     public String toString() {
         return "User{" +
                 "key='" + key + '\'' +
                 ", userName='" + userName + '\'' +
-                ", level=" + level +
                 ", score=" + score +
-                ", coins=" + coins +
                 '}';
     }
 }

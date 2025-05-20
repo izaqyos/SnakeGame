@@ -19,9 +19,6 @@
             android:name=".RegActivityFile"
             android:exported="false" />
         <activity
-            android:name=".RegActivityFB"
-            android:exported="false" />
-        <activity
             android:name=".settings"
             android:exported="false" />
         <activity

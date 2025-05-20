@@ -35,16 +35,13 @@ public class MainActivity extends AppCompatActivity {
     private static final String KEY_SAVE_USER = "save_user";
     private static final String MUSIC_PREFS_NAME = "game_settings";
     private static final String PREF_MUSIC = "pref_music";
-    private static final String MAIN_ACTIVITY_TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         userFileStorage = new UserFileStorage(this);
         myFBDB = new MyFBDB();
-
         etUserName = findViewById(R.id.etUserName);
         etPassword = findViewById(R.id.etPassword);
         loginProgressBar = findViewById(R.id.loginProgressBar);
@@ -52,12 +49,11 @@ public class MainActivity extends AppCompatActivity {
         playButton = findViewById(R.id.startGameButton);
         saveUserSwitch = findViewById(R.id.saveUserSwitch);
 
-        // שליפת פרטי התחברות ממועדפים
+        // טעינת פרטי התחברות שמורים ומצב "זכור אותי"
         SharedPreferences prefs = getSharedPreferences(AUTH_PREFS_NAME, MODE_PRIVATE);
         String lastUsername = prefs.getString(KEY_LAST_USERNAME, null);
         String lastPassword = prefs.getString(KEY_LAST_PASSWORD, null);
         boolean isSaveUserEnabled = prefs.getBoolean(KEY_SAVE_USER, false);
-
         if (lastUsername != null && isSaveUserEnabled) {
             etUserName.setText(lastUsername);
             etPassword.setText(lastPassword);
@@ -70,9 +66,12 @@ public class MainActivity extends AppCompatActivity {
             startMusicService();
         }
 
-        // הגדרת מצב ה-Switch
-        saveUserSwitch.setChecked(isSaveUserEnabled);
-
+        saveUserSwitch.setChecked(isSaveUserEnabled);         // הגדרת מצב ה-Switch
+        saveUserSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {// עדכון SharedPreferences כשיש שינוי ב-Switch
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putBoolean(KEY_SAVE_USER, isChecked);
+            editor.apply();
+        });
         // כפתור עזרה
         Button helpButton = findViewById(R.id.helpButton);
         helpButton.setOnClickListener(v -> showHelpDialog());
@@ -95,18 +94,11 @@ public class MainActivity extends AppCompatActivity {
         snakeTextView.setTextSize(95);
         welcomeTextView.setTextSize(45);
 
-        ImageButton backButton = findViewById(R.id.imageButtonSettings);
-        backButton.setOnClickListener(v -> {
+        ImageButton settingsButton = findViewById(R.id.imageButtonSettings);
+        settingsButton.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, settings.class);
             intent.putExtra("CALLING_ACTIVITY", "MainActivity");
             startActivity(intent);
-        });
-
-        // עדכון SharedPreferences כשיש שינוי ב-Switch
-        saveUserSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.putBoolean(KEY_SAVE_USER, isChecked);
-            editor.apply();
         });
     }
 
@@ -119,14 +111,11 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Username and password cannot be empty.", Toast.LENGTH_SHORT).show();
             return;
         }
-
         loginProgressBar.setVisibility(View.VISIBLE);
         loginStatusText.setText("Checking credentials...");
         loginStatusText.setVisibility(View.VISIBLE);
         playButton.setEnabled(false);
-
-        if (userFileStorage.checkUser(username, password)) {
-            Log.d("CheckUser", "FileStorage: User credentials valid.");
+        if (userFileStorage.checkUser(username, password)) { //בדיקה מול אחסון מקומי
             loginStatusText.setText("Login successful!");
             saveLoginToPreferences(username, password);
             new Handler().postDelayed(() -> {
@@ -137,9 +126,7 @@ public class MainActivity extends AppCompatActivity {
             }, 500);
             return;
         }
-
-        loginStatusText.setText("Checking cloud database...");
-
+        loginStatusText.setText("Checking cloud database..."); // אם לא נמצא מקומית, בדיקה מול Firebase
         myFBDB.userExistsAsync(username, new MyFBDB.UserExistsCallback() {
             @Override
             public void onResult(boolean exists, Exception error) {
@@ -165,12 +152,10 @@ public class MainActivity extends AppCompatActivity {
                                         playButton.setEnabled(true);
                                         return;
                                     }
-
                                     if (isValid) {
                                         Log.d("CheckUser", "Firebase: User credentials valid.");
                                         loginStatusText.setText("Login successful!");
-                                        saveLoginToPreferences(username, password);
-
+                                        saveLoginToPreferences(username, password);  // העתקת משתמש לאחסון מקומי אם לא קיים שם
                                         try {
                                             User user = new User(username, password, 0, 0, 0);
                                             userFileStorage.saveUser(user);
@@ -178,7 +163,6 @@ public class MainActivity extends AppCompatActivity {
                                         } catch (Exception e) {
                                             Log.w("CheckUser", "Failed to copy user to local storage: " + e.getMessage());
                                         }
-
                                         new Handler().postDelayed(() -> {
                                             loginProgressBar.setVisibility(View.GONE);
                                             loginStatusText.setVisibility(View.GONE);
@@ -215,7 +199,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void launchGame() {
         Intent intent = new Intent(this, GameActivity.class);
-        intent.putExtra("USERNAME", etUserName.getText().toString().trim());
+        intent.putExtra("USERNAME", etUserName.getText().toString().trim()); //מעבירה את שם המשתמש
         startActivity(intent);
     }
 

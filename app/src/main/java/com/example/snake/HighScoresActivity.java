@@ -39,25 +39,29 @@ public class HighScoresActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_score);
 
-        Log.d(TAG, "onCreate: Activity created.");
-
-        currentUsername = getIntent().getStringExtra("USERNAME");
+        currentUsername = getIntent().getStringExtra("USERNAME");   // קבלת שם המשתמש מה-Intent
         if (currentUsername != null && !currentUsername.isEmpty()) {
             Log.i(TAG, "Username received from Intent: '" + currentUsername + "'");
         } else {
             Log.w(TAG, "No USERNAME passed in Intent to HighScoresActivity. currentUsername is: '" + currentUsername + "'");
         }
 
-        TextView titleTextView = findViewById(R.id.HighScoresTitle);
+        TextView titleTextView = findViewById(R.id.HighScoresTitle);   // אתחול TextView לכותרת עם פונט מותאם אישית
         Typeface typeface = getResources().getFont(R.font.fascinaregular);
         titleTextView.setTypeface(typeface);
         titleTextView.setTextSize(95);
 
-        myFBDB = new MyFBDB();
-
+        myFBDB = new MyFBDB(); // אתחול הגישה ל-Firebase
         recyclerViewHighScores = findViewById(R.id.recyclerViewHighScores);
-        tvNoScores = findViewById(R.id.tvNoScores);
+        tvNoScores = findViewById(R.id.tvNoScores); //כשאין שיאים
         ImageButton buttonBack = findViewById(R.id.backToGame);
+
+        ImageButton settingsButton = findViewById(R.id.settingsButton);
+        settingsButton.setOnClickListener(v -> {
+            Intent intent = new Intent(HighScoresActivity.this, settings.class);
+            intent.putExtra("CALLING_ACTIVITY", "MainActivity");
+            startActivity(intent);
+        });
 
         if (buttonBack != null) {
             buttonBack.setOnClickListener(v -> {
@@ -87,26 +91,20 @@ public class HighScoresActivity extends AppCompatActivity {
 
         if (recyclerViewHighScores != null) {
             recyclerViewHighScores.setLayoutManager(new LinearLayoutManager(this));
-            userScoreList = new ArrayList<>();
-
-            // --- ADDING EXTRA LOG BEFORE ADAPTER CREATION ---
-            Log.d(TAG, "Just before creating ScoreAdapter, this.currentUsername is: '" + this.currentUsername + "'");
-            // -------------------------------------------------
-
-            scoreAdapter = new ScoreAdapter(userScoreList, this.currentUsername); // Explicitly use this.currentUsername
+            userScoreList = new ArrayList<>(); // אתחול רשימה ריקה עבור ה-Adapter
+            scoreAdapter = new ScoreAdapter(userScoreList, this.currentUsername); // טעינת שם המשתמש
             recyclerViewHighScores.setAdapter(scoreAdapter);
         } else {
             Log.e(TAG, "recyclerViewHighScores is null. Check ID in XML.");
         }
 
-        loadFirebaseHighScores();
+        loadFirebaseHighScores(); //טעינת הנתונים
     }
 
-    private void loadFirebaseHighScores() {
+    private void loadFirebaseHighScores() { //מיון קבלת השיאים
         Log.d(TAG, "loadFirebaseHighScores: Attempting to fetch scores from Firebase...");
-        if (tvNoScores != null) tvNoScores.setVisibility(View.GONE);
+        if (tvNoScores != null) tvNoScores.setVisibility(View.GONE); //טיפול בשגיאות
         if (recyclerViewHighScores != null) recyclerViewHighScores.setVisibility(View.VISIBLE);
-
         if (myFBDB == null) {
             Log.e(TAG, "MyFBDB instance is null! Cannot load scores.");
             if (tvNoScores != null) {
@@ -116,11 +114,9 @@ public class HighScoresActivity extends AppCompatActivity {
             }
             return;
         }
-
         fbDataListener = new MyFBDB.DataLoadListener() {
             @Override
             public void onDataLoaded() {
-                Log.d(TAG, "Firebase data loaded via listener in HighScoresActivity.");
                 List<User> fetchedUsers = myFBDB.getUsersArrayList();
                 if (fetchedUsers == null) {
                     Log.e(TAG, "myFBDB.getUsersArrayList() returned null after data load!");
@@ -130,14 +126,13 @@ public class HighScoresActivity extends AppCompatActivity {
                 List<User> allUsers = new ArrayList<>(fetchedUsers);
                 if (allUsers.isEmpty()) {
                     handleNoScores("No high scores yet!");
-                } else {
+                } else {     // מיון המשתמשים לפי ניקוד בסדר יורד
                     Collections.sort(allUsers, (u1, u2) -> Integer.compare(u2.getScore(), u1.getScore()));
                     userScoreList.clear();
                     userScoreList.addAll(allUsers);
-                    if (scoreAdapter != null) scoreAdapter.notifyDataSetChanged();
+                    if (scoreAdapter != null) scoreAdapter.notifyDataSetChanged();// עדכון ה-RecyclerView
                     if (tvNoScores != null) tvNoScores.setVisibility(View.GONE);
                     if (recyclerViewHighScores != null) recyclerViewHighScores.setVisibility(View.VISIBLE);
-                    Log.d(TAG, "Displaying " + allUsers.size() + " scores.");
                 }
             }
             @Override
@@ -146,16 +141,7 @@ public class HighScoresActivity extends AppCompatActivity {
                 handleNoScores("Failed to load scores: " + error.toException().getMessage());
             }
         };
-        myFBDB.addDataLoadListener(fbDataListener);
-        List<User> initialUsers = myFBDB.getUsersArrayList();
-        if (initialUsers != null && !initialUsers.isEmpty() && (scoreAdapter != null && scoreAdapter.getItemCount() == 0) ) {
-            Log.d(TAG, "Initial data already present in MyFBDB, processing now.");
-            fbDataListener.onDataLoaded();
-        } else if (initialUsers != null && initialUsers.isEmpty()) {
-            Log.d(TAG, "MyFBDB.getUsersArrayList() is initialized but empty. Waiting for listener.");
-        } else if (initialUsers == null) {
-            Log.d(TAG, "MyFBDB.getUsersArrayList() returned null initially. Waiting for listener.");
-        }
+        myFBDB.addDataLoadListener(fbDataListener); // הרשמה למאזין
     }
 
     private void handleNoScores(String message) {

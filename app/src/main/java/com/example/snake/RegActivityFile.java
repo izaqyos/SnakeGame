@@ -2,7 +2,7 @@ package com.example.snake;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log; // ודאי שהייבוא הזה קיים
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -25,9 +25,9 @@ public class RegActivityFile extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_reg); // ודאי שזהו שם קובץ ה-Layout הנכון שלך
+        setContentView(R.layout.activity_reg);
 
-        ImageButton backButton = findViewById(R.id.backButton2); // ודאי שה-ID נכון
+        ImageButton backButton = findViewById(R.id.backButton2); // כפתור חזרה
         if (backButton != null) {
             backButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -40,12 +40,10 @@ public class RegActivityFile extends AppCompatActivity {
 
         usernameEditText = findViewById(R.id.registerUsernameEditText);
         passwordEditText = findViewById(R.id.registerPasswordEditText);
-        // אם יש שדה אימות סיסמה ב-XML:
-        // confirmPasswordEditText = findViewById(R.id.yourConfirmPasswordEditTextId);
         registerButton = findViewById(R.id.registerConfirmButton);
         errorTextView = findViewById(R.id.registerErrorTextView);
 
-        userFileStorage = new UserFileStorage(this);
+        userFileStorage = new UserFileStorage(this);// אתחול אחסון מקומי
         myFBDB = new MyFBDB(); // אתחול MyFBDB
 
         if (registerButton != null) {
@@ -55,24 +53,12 @@ public class RegActivityFile extends AppCompatActivity {
                     Log.d(TAG, "Register button clicked");
                     String username = usernameEditText.getText().toString().trim();
                     String password = passwordEditText.getText().toString().trim();
-                    // String confirmPassword = ""; // אם יש שדה אימות
-                    // if (confirmPasswordEditText != null) {
-                    //     confirmPassword = confirmPasswordEditText.getText().toString().trim();
-                    // }
 
-                    // בדיקות תקינות קלט
-                    if (username.isEmpty() || password.isEmpty()) {
+                    if (username.isEmpty() || password.isEmpty()) {   // בדיקות תקינות קלט
                         errorTextView.setText("שם משתמש וסיסמה לא יכולים להיות ריקים.");
                         errorTextView.setVisibility(View.VISIBLE);
                         return;
                     }
-                    // אם יש שדה אימות סיסמה:
-                    // if (!password.equals(confirmPassword)) {
-                    //    errorTextView.setText("הסיסמאות אינן תואמות.");
-                    //    errorTextView.setVisibility(View.VISIBLE);
-                    //    return;
-                    // }
-                    // אפשר להוסיף בדיקות נוספות (אורך מינימלי וכו')
 
                     errorTextView.setVisibility(View.GONE); // הסתרת הודעת שגיאה קודמת
                     registerButton.setEnabled(false); // השבתת הכפתור למניעת לחיצות כפולות
@@ -90,7 +76,7 @@ public class RegActivityFile extends AppCompatActivity {
                     myFBDB.userExistsAsync(username, new MyFBDB.UserExistsCallback() {
                         @Override
                         public void onResult(boolean existsInFirebase, Exception error) {
-                            runOnUiThread(() -> { // ודא שהקוד רץ על ה-UI Thread
+                            runOnUiThread(() -> {
                                 if (error != null) {
                                     Log.e(TAG, "Error checking username in Firebase: " + error.getMessage());
                                     errorTextView.setText("שגיאה בבדיקת שם המשתמש בענן: " + error.getMessage());

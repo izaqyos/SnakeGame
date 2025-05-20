@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.RadioGroup;
@@ -14,12 +13,10 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class settings extends AppCompatActivity {
-
     private Switch musicSwitch;
     private SharedPreferences sharedPreferencesMusic;
     private static final String PREF_MUSIC = "pref_music";  // מפתח לשמירת מצב המוזיקה
     private static final String MUSIC_PREFS_NAME = "game_settings";  // שם קובץ ההעדפות
-
     private Button buttonColorGreen, buttonColorRed, buttonColorBlue, buttonColorYellow, buttonColorWhite;
     private RadioGroup difficultyRadioGroup;
     private SharedPreferences sharedPreferences;
@@ -106,29 +103,7 @@ public class settings extends AppCompatActivity {
         startActivity(intent);
         finish();
     }
-    public void startGame(View v) {
-        SharedPreferences prefs = getSharedPreferences(SETTINGS_PREFS_NAME, MODE_PRIVATE);
-        int difficultyLevel = prefs.getInt(PREF_DIFFICULTY, 0); // ברירת מחדל 0 (קל)
 
-        int speed;
-        switch (difficultyLevel) {
-            case 0: // Easy
-                speed = 10;  // מהירות נמוכה
-                break;
-            case 1: // Medium
-                speed = 20;  // מהירות בינונית
-                break;
-            case 2: // Hard
-                speed = 30;  // מהירות גבוהה
-                break;
-            default:
-                speed = 10;  // ברירת מחדל
-        }
-
-        Intent intent = new Intent(this, GameActivity.class);
-        intent.putExtra("SPEED", speed); // שלח את המהירות למסך המשחק
-        startActivity(intent);
-    }
 
     // אם המשתמש לוחץ על כפתור החזרה במכשיר
     @Override

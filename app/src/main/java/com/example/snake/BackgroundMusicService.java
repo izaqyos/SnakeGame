@@ -10,7 +10,7 @@ import androidx.annotation.Nullable;
 public class BackgroundMusicService extends Service {
     private MediaPlayer mediaPlayer;
     private static boolean isPlaying = false;
-    private float currentVolume = 2.0f; // Default volume
+    private float currentVolume = 2.0f;
     public static boolean isPlaying() {
         return isPlaying;
     }
@@ -20,15 +20,17 @@ public class BackgroundMusicService extends Service {
         return null;
     }
     @Override
-    public void onCreate() {
+    public void onCreate() { //היא אחראית על יצירת אובייקט ה-״MediaPlayer״, טעינת קובץ המוזיקה מהמשאבים (R.raw.music), הגדרת המוזיקה לנגינה חוזרת (looping), והחלת עוצמת השמע ההתחלתית
         super.onCreate();
         mediaPlayer = MediaPlayer.create(this, R.raw.music);
-        mediaPlayer.setLooping(true);
-        setVolume(currentVolume); // Apply initial volume
+        if (mediaPlayer != null) {
+            mediaPlayer.setLooping(true);
+        }
+        setVolume(currentVolume);
         Log.d("MusicService", "onCreate");
     }
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+    public int onStartCommand(Intent intent, int flags, int startId) { // נקראת מרכיב אחר, דואגת להתחיל את נגינת המוזיקה אם היא לא מופעלת כבר
         Log.d("MusicService", "onStartCommand");
         if (intent != null && intent.hasExtra("volume")) {
             currentVolume = intent.getFloatExtra("volume", 1.0f);
@@ -48,7 +50,7 @@ public class BackgroundMusicService extends Service {
         }
     }
     @Override
-    public void onDestroy() {
+    public void onDestroy() {//נקראת כאשר ה-Service עומד להיהרס ומשחררת משאבים שה-Service תפס, ובמיוחד את אובייקט ה-MediaPlayer.
         super.onDestroy();
         if (mediaPlayer != null) {
             mediaPlayer.stop();

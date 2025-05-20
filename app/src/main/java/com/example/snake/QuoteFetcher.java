@@ -1,12 +1,10 @@
-package com.example.snake; // Ensure this matches your package name
+package com.example.snake;
 
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-
 import org.json.JSONArray; // Needed for Zen Quotes API response
 import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -16,13 +14,10 @@ import java.util.concurrent.Executors;
 import java.nio.charset.StandardCharsets;
 
 public class QuoteFetcher {
-
     private static final String TAG = "QuoteFetcher_Zen";
-    // Zen Quotes API endpoint for a random quote
-    private static final String QUOTE_API_URL = "https://zenquotes.io/api/random";
-
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-    private final Handler mainThreadHandler = new Handler(Looper.getMainLooper());
+    private static final String QUOTE_API_URL = "https://zenquotes.io/api/random"; // כתובת ה-API
+    private final ExecutorService executorService = Executors.newSingleThreadExecutor(); // לביצוע ברקע
+    private final Handler mainThreadHandler = new Handler(Looper.getMainLooper()); // להחזרת תוצאות ל-UI Thread
 
     public interface QuoteCallback {
         void onQuoteFetched(String quote, String author);
@@ -30,8 +25,7 @@ public class QuoteFetcher {
     }
 
     public void fetchRandomQuote(QuoteCallback callback) {
-        Log.d(TAG, "Attempting to fetch quote from Zen Quotes API..."); // New log
-        executorService.execute(() -> {
+        executorService.execute(() -> { // הרצת הפעולה ב-Thread נפרד
             HttpURLConnection connection = null;
             BufferedReader reader = null;
             StringBuilder responseContent = new StringBuilder();
@@ -39,7 +33,6 @@ public class QuoteFetcher {
             try {
                 URL url = new URL(QUOTE_API_URL);
                 connection = (HttpURLConnection) url.openConnection();
-
                 connection.setRequestMethod("GET");
                 connection.setConnectTimeout(15000);
                 connection.setReadTimeout(15000);
@@ -47,7 +40,7 @@ public class QuoteFetcher {
 
                 int statusCode = connection.getResponseCode();
 
-                if (statusCode == HttpURLConnection.HTTP_OK) { // 200 OK
+                if (statusCode == HttpURLConnection.HTTP_OK) {  // הצלחה
                     reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8));
                     String line;
                     while ((line = reader.readLine()) != null) {
@@ -56,10 +49,9 @@ public class QuoteFetcher {
                     String responseBody = responseContent.toString();
                     Log.d(TAG, "Raw JSON response: " + responseBody); // Log raw response
 
-                    // Zen Quotes API returns a JSON array with one object
-                    JSONArray jsonArray = new JSONArray(responseBody);
+                    JSONArray jsonArray = new JSONArray(responseBody); // ה-API מחזיר מערך
                     if (jsonArray.length() > 0) {
-                        JSONObject quoteObject = jsonArray.getJSONObject(0); // Get the first object
+                        JSONObject quoteObject = jsonArray.getJSONObject(0); // לקיחת האובייקט הראשון
                         String content = quoteObject.optString("q", "Could not parse quote content."); // 'q' for quote
                         String author = quoteObject.optString("a", "Unknown");        // 'a' for author
 
@@ -81,11 +73,11 @@ public class QuoteFetcher {
                     }
                     mainThreadHandler.post(() -> callback.onFetchFailed(errorMsg + " - Check Logcat for API error response."));
                 }
-            } catch (Exception e) {
+            } catch (Exception e) { // טיפול בשגיאות כלליות (רשת, JSON, וכו')
                 String errorMsg = "Error fetching/parsing quote: " + e.getMessage();
                 mainThreadHandler.post(() -> callback.onFetchFailed(errorMsg));
             } finally {
-                if (reader != null) {
+                if (reader != null) {   // סגירת משאבים
                     try {
                         reader.close();
                     } catch (Exception e) {

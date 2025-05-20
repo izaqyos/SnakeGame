@@ -71,13 +71,11 @@ public class GameManager extends SurfaceView implements Runnable, SurfaceHolder.
     private Random random = new Random();
     private final long FRAME_RATE_MS = 200;
 
-
-    // עדכון הבנאי כדי לקבל שם משתמש ו-MyFBDB
-    public GameManager(Context context, GameActivity activity, String username, MyFBDB fbdb) {
+    public GameManager(Context context, GameActivity activity, String username, MyFBDB fbdb) { //מאתחל את כל הרכיבים הדרושים לפעולת המשחק
         super(context);
         this.gameActivity = activity;
-        this.currentUsername = username; // <<-- שמירת שם המשתמש
-        this.myFBDB = fbdb;             // <<-- שמירת רפרנס ל-MyFBDB
+        this.currentUsername = username; // שמירת שם המשתמש
+        this.myFBDB = fbdb;             // שמירת רפרנס ל-MyFBD
         holder = getHolder();
         holder.addCallback(this);
 
@@ -108,7 +106,7 @@ public class GameManager extends SurfaceView implements Runnable, SurfaceHolder.
         quoteTextPaint.setTextSize(35);
         quoteTextPaint.setAntiAlias(true);
 
-        loadGameAssets();
+        loadGameAssets(); //העלאת התמונות
         Log.i("GameManager", "GameManager constructed for user: " + currentUsername);
     }
 
@@ -186,37 +184,6 @@ public class GameManager extends SurfaceView implements Runnable, SurfaceHolder.
             thread = new Thread(this);
             thread.start();
             Log.i("GameManager", "Game loop thread started.");
-        }
-    }
-
-    public class SnakeGame {
-        private int speed = 10;  // ברירת מחדל מהירות
-
-        public void setSpeed(int speed) {
-            this.speed = speed;
-        }
-
-        public void updateGame() {
-            // עדכן את המשחק בקצב המתאים למהירות הנבחרת
-            long delay = 1000 / speed;  // לדוגמה: אם המהירות 10, העדכון יקרה כל 100ms
-
-            new Handler() {
-                @Override
-                public void close() throws SecurityException {
-
-                }
-
-                @Override
-                public void flush() {
-
-                }
-
-                @Override
-                public void publish(LogRecord logRecord) {
-
-                }
-            };
-
         }
     }
 
@@ -307,7 +274,7 @@ public class GameManager extends SurfaceView implements Runnable, SurfaceHolder.
 
     // מתודה מרכזית לטיפול בסיום המשחק
     private void handleGameOver() {
-        if (!isGameOver) { // ודא שזה קורה רק פעם אחת
+        if (!isGameOver) {
             isGameOver = true;
             justBecameGameOver = true;
             Log.d("GameManager_QuoteDebug", "Game Over! Final Score for " + currentUsername + ": " + score);
@@ -322,18 +289,11 @@ public class GameManager extends SurfaceView implements Runnable, SurfaceHolder.
                             Log.e("GameManager_Firebase", "Error updating high score for " + currentUsername + ": " + error.getMessage());
                         } else {
                             Log.i("GameManager_Firebase", "High score for " + currentUsername + " updated in Firebase to: " + updatedScore);
-                            // אופציונלי: עדכני את ה-UI של GameActivity עם הניקוד המעודכן מ-Firebase אם צריך
-                            if (gameActivity != null) {
-                                // gameActivity.updatePersonalHighScoreDisplay(updatedScore); // תצטרכי להוסיף מתודה כזו ל-GameActivity
-                            }
-                        }
-                    }
-                });
+                        }}});
             } else {
                 Log.w("GameManager_Firebase", "Cannot update high score: myFBDB is " + (myFBDB == null ? "null" : "not null") +
                         ", currentUsername is " + (currentUsername == null || currentUsername.isEmpty() ? "null/empty" : currentUsername));
             }
-
             // בקשת ציטוט
             if (quoteFetcher != null && gameOverQuote == null) {
                 Log.i("GameManager_QuoteDebug", "Fetching quote because game over and no quote exists.");
@@ -342,48 +302,43 @@ public class GameManager extends SurfaceView implements Runnable, SurfaceHolder.
             // הצגת כפתור הפעלה מחדש
             if (gameActivity != null) {
                 gameActivity.showGameOverUI();
-            }
-        }
-    }
+            }}}
 
-    private void updateGame() {
+    private void updateGame() { //אחראית על לוגיקת המשחק ועדכונה
         if (isGameOver) return;
         if (snakeSegments.isEmpty()) {
             Log.e("GameManager", "updateGame called with empty snakeSegments.");
             handleGameOver();
-            return;
-        }
+            return; }
 
-        Point currentHead = snakeSegments.getFirst();
+        Point currentHead = snakeSegments.getFirst(); //ראש הנחש כיוון
         int newX = currentHead.x;
         int newY = currentHead.y;
 
-        switch (currentDirection) {
+        switch (currentDirection) { //שינוי כיוון התנועה
             case UP: newY -= segmentSize; break;
             case DOWN: newY += segmentSize; break;
             case LEFT: newX -= segmentSize; break;
-            case RIGHT: newX += segmentSize; break;
-        }
+            case RIGHT: newX += segmentSize; break; }
 
-        if (newX < 0 || newX >= scrWidth || newY < 0 || newY >= scrHeight) {
+        if (newX < 0 || newX >= scrWidth || newY < 0 || newY >= scrHeight) {//בודק התנגשות בקיר
             Log.w("GameManager", "Collision with border.");
             handleGameOver();
             return;
         }
-        for (Point segment : snakeSegments) {
+        for (Point segment : snakeSegments) {//בודק התנגשות עצמית
             if (newX == segment.x && newY == segment.y) {
                 Log.w("GameManager", "Collision with self.");
                 handleGameOver();
                 return;
             }
         }
-
-        Point newHeadPoint = new Point(newX, newY);
+        Point newHeadPoint = new Point(newX, newY);//מוסיף עוד אורך לנחש
         snakeSegments.addFirst(newHeadPoint);
 
-        if (newHeadPoint.x == foodPosition.x && newHeadPoint.y == foodPosition.y) {
+        if (newHeadPoint.x == foodPosition.x && newHeadPoint.y == foodPosition.y) { //במקרה והתפוח נאכל
             score++;
-            if (gameActivity != null) gameActivity.updateScore(score); // רק עדכון ה-UI של הניקוד הנוכחי
+            if (gameActivity != null) gameActivity.updateScore(score); //  עדכון ה-UI של הניקוד הנוכחי
             Log.i("GameManager", "Food eaten! Score: " + score);
             placeFood();
         } else {
@@ -395,8 +350,8 @@ public class GameManager extends SurfaceView implements Runnable, SurfaceHolder.
         if (holder.getSurface().isValid()) {
             myCanvas = holder.lockCanvas();
             if (myCanvas == null) return;
-            myCanvas.drawRect(0, 0, scrWidth, scrHeight, bgPaint);
-            if (scaledAppleBitmap != null) {
+            myCanvas.drawRect(0, 0, scrWidth, scrHeight, bgPaint); // רקע
+            if (scaledAppleBitmap != null) { //ציור התפוח
                 float drawX = foodPosition.x; float drawY = foodPosition.y;
                 if (appleDisplaySize > segmentSize) {
                     drawX = foodPosition.x - (appleDisplaySize - segmentSize) / 2.0f;
@@ -409,10 +364,10 @@ public class GameManager extends SurfaceView implements Runnable, SurfaceHolder.
             } else {
                 myCanvas.drawRect(foodPosition.x, foodPosition.y, foodPosition.x + segmentSize, foodPosition.y + segmentSize, foodPaint);
             }
-            for (Point segment : snakeSegments) {
+            for (Point segment : snakeSegments) { //מוסיף ראש חדש לנחש
                 myCanvas.drawRect(segment.x, segment.y, segment.x + segmentSize, segment.y + segmentSize, snakePaint);
             }
-            if (!snakeSegments.isEmpty() && !isGameOver() && eyePaint != null) {
+            if (!snakeSegments.isEmpty() && !isGameOver() && eyePaint != null) { //משנה את כיוון העיניים
                 Point head = snakeSegments.getFirst();
                 float eyeRadius = segmentSize / 7f;
                 float eyeVOffH = segmentSize / 3.5f, eyeHOffV = segmentSize / 3.5f, eyeFwdOff = segmentSize / 4f;
@@ -430,10 +385,10 @@ public class GameManager extends SurfaceView implements Runnable, SurfaceHolder.
                     myCanvas.drawCircle(e1x, e1y, pupilRadius, pupilPaint); myCanvas.drawCircle(e2x, e2y, pupilRadius, pupilPaint);
                 }
             }
-            if (showGameOverFlash && gameOverFlashPaint != null) {
+            if (showGameOverFlash && gameOverFlashPaint != null) { //פלאש
                 myCanvas.drawRect(0, 0, scrWidth, scrHeight, gameOverFlashPaint);
             }
-            if (isGameOver()) {
+            if (isGameOver()) { //מתודת סיום המשחק
                 float gameOverTextY = scrHeight / 2f;
                 if (quoteLayout != null) {
                     gameOverTextY = (scrHeight / 2f) - (quoteLayout.getHeight() / 2f) - (gameOverPaint.getTextSize() / 2f) - 10;
@@ -455,7 +410,7 @@ public class GameManager extends SurfaceView implements Runnable, SurfaceHolder.
     public void run() {
         while (running) {
             long startTime = System.currentTimeMillis();
-            if (justBecameGameOver) {
+            if (justBecameGameOver) { //אחראי על ההבהוב
                 showGameOverFlash = true;
                 gameOverFlashFramesRemaining = GAME_OVER_FLASH_TOTAL_FRAMES;
                 justBecameGameOver = false;
@@ -465,7 +420,7 @@ public class GameManager extends SurfaceView implements Runnable, SurfaceHolder.
                 gameOverFlashFramesRemaining--;
                 if (gameOverFlashFramesRemaining <= 0) showGameOverFlash = false;
             }
-            if (!isGameOver && surfaceReady) updateGame();
+            if (!isGameOver && surfaceReady) updateGame(); //שליטה בקצב פריימים
             if (surfaceReady) drawSurface();
             long timeThisFrame = System.currentTimeMillis() - startTime;
             long sleepTime = FRAME_RATE_MS - timeThisFrame;

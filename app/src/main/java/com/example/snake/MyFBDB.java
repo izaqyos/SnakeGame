@@ -46,33 +46,20 @@ public class MyFBDB {
     }
 
     MyFBDB(){
-        Log.d(TAG, "MyFBDB constructor entry.");
-        // Remove the static check - always initialize for this instance
-        Log.d(TAG, "Initializing FirebaseDatabase instance for this MyFBDB object...");
         try {
-            // Explicitly set the database URL
             String dbUrl = "https://snakegame-b3319-default-rtdb.europe-west1.firebasedatabase.app/";
             Log.d(TAG, "Trying to connect to Firebase URL: " + dbUrl);
             database = FirebaseDatabase.getInstance(dbUrl);
-            
             if (database == null) {
                  Log.e(TAG, "FirebaseDatabase.getInstance() returned null!");
-                 // Handle error appropriately - maybe throw exception?
                  return; 
             }
             Log.d(TAG, "FirebaseDatabase instance obtained.");
             myRef = database.getReference("Users");
             Log.d(TAG, "Got DatabaseReference for /Users. Attaching ValueEventListener...");
-
-            // Test write to verify connection
-            DatabaseReference testRef = database.getReference("connection_test");
-            testRef.setValue("connected_at_" + System.currentTimeMillis())
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "Test write SUCCESS - connection confirmed"))
-                .addOnFailureListener(e -> Log.e(TAG, "Test write FAILED - connection error: " + e.getMessage()));
-                
             myRef.addValueEventListener(new ValueEventListener() {
                 @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
+                public void onDataChange(DataSnapshot dataSnapshot) { //עדכון בשינוי מידע
                     Log.d(TAG, TAG + " | onDataChange received for instance: " + MyFBDB.this.hashCode());
                     List<User> tempList = new ArrayList<>();
                     for (DataSnapshot dataSnapshot1 : dataSnapshot.getChildren()) {
@@ -84,17 +71,14 @@ public class MyFBDB {
                             Log.w(TAG, TAG + " | Found null user data in snapshot: " + dataSnapshot1.getKey());
                         }
                     }
-                    // Update the instance list
-                    usersArrayList.clear();
+                    usersArrayList.clear(); //עדכון הרשימה
                     usersArrayList.addAll(tempList);
                     Log.d(TAG, TAG + " | Instance usersArrayList updated. Size: " + usersArrayList.size());
-
                     Log.d(TAG, "Notifying " + dataLoadListeners.size() + " instance listeners about data load.");
-                    for (DataLoadListener listener : dataLoadListeners) {
+                    for (DataLoadListener listener : dataLoadListeners) {   // הודע למאזינים שהנתונים נטענו
                         listener.onDataLoaded();
                     }
                 }
-
                 @Override
                 public void onCancelled(DatabaseError error) {
                     Log.w(TAG, "Failed to read value for instance: "+ MyFBDB.this.hashCode(), error.toException());
@@ -116,14 +100,13 @@ public class MyFBDB {
         return new ArrayList<>(); // Return an empty list if the source is null
     }
     public void saveUser(User user){
-        // Ensure myRef is initialized before using
         if (myRef == null) {
              Log.e(TAG, "saveUser called before myRef is initialized!");
-             return; // Or throw an exception
+             return;
         }
-        DatabaseReference newUserRef = myRef.push();
-        user.key = newUserRef.getKey();
-        newUserRef.setValue(user);
+        DatabaseReference newUserRef = myRef.push(); // יצירת מזהה ייחודי (key) חדש
+        user.key = newUserRef.getKey();// שמירת המפתח באובייקט המשתמש
+        newUserRef.setValue(user); // שמירת האובייקט כולו ב-Firebase
     }
 
     public boolean userExists(User u){
@@ -199,7 +182,6 @@ public class MyFBDB {
             callback.onResult(false, new Exception("Database reference not initialized"));
             return;
         }
-        
         try {
             Log.d(TAG, "Creating query: orderByChild(\"userName\").equalTo(\"" + username + "\")");
             myRef.orderByChild("userName").equalTo(username).addListenerForSingleValueEvent(new ValueEventListener() {

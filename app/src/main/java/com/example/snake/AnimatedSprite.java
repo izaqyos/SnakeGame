@@ -17,7 +17,7 @@ public class AnimatedSprite {
     private int imgW;
     private Rect rect;
 
-    AnimatedSprite(int xStart, int yStart, Bitmap pic, int scrW, int scrH){
+    AnimatedSprite(int xStart, int yStart, Bitmap pic, int scrW, int scrH){ //מאתחל אובייקט חדש עם מיקום התחלתי, תמונה (Bitmap), וממדי המסך לצורך חישוב גבולות.
         x=xStart;
         y=yStart;
         xStep=0;
@@ -31,8 +31,7 @@ public class AnimatedSprite {
         rect = new Rect();
         updateRect();
     }
-    public void draw(Canvas canvas){
-        //Log.d("APV","InDraw "+x+" "+y);
+    public void draw(Canvas canvas){ //מצייר את התמונה של ה-Sprite על ה-"Canvas" הנתון, במיקום (x,y) הנוכחי של ה-Sprite.
         canvas.drawBitmap(myPic,x,y,null);
     }
 
@@ -73,7 +72,8 @@ public class AnimatedSprite {
     public void setyStep(int yStep){
         this.yStep=yStep;
     }
-    public void move() {
+    public void move() { //מעדכi את מיקום ה-Sprite על פי ערכי הצעד שלו (xStep, yStep). כאשר ה-Sprite יוצא מצד אחד של המסך, הוא מופיע מחדש בצד הנגדי.
+
         x = x - xStep;
         if (x<=-500) x=width+500;
         y = y + yStep;
@@ -100,7 +100,8 @@ public class AnimatedSprite {
         return rect;
     }
 
-    public boolean intersect(AnimatedSprite other){
+    public boolean intersect(AnimatedSprite other){//בודקת האם המלבן התוחם של ה-Sprite הנוכחי חותך מלבן התוחם של "AnimatedSprite" אחר.
+
         return rect.intersect(other.getRect());
     }
 }
